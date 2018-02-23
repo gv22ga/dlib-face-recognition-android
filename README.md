@@ -2,7 +2,10 @@
 Recognize faces in android using dlib state-of-the-art face recognition model based on deep learning. The model has an accuracy of 99.13% on the LFW benchmark.
 
 ## App
-[Video to be added]
+Face recognition is very accurate but it takes approximately 6 seconds on a Redmi4 with Snapdragon 435 and Android 7.1.
+
+<img src="https://raw.githubusercontent.com/gv22ga/dlib-face-recognition-android/master/media/demo.gif" width=350>
+
 
 ## Usage
     git clone --recursive https://github.com/gv22ga/dlib-face-recognition-android.git
@@ -25,12 +28,20 @@ This project uses dlib 19.9. Due to some c++11 issues, I had problem compiling d
 
 ## Sample code
 ```java
+// recognize person
 FaceRec mFaceRec = new FaceRec(Constants.getDLibDirectoryPath());
 List<VisionDetRet> results = mFaceRec.recognize(image_bitmap);
 for(VisionDetRet n:results) {
     Log.d(TAG, n.getLabel()); // prints the name of recognized person
 }
+
+// add person
+// add the person image to dlib_rec_example/images directory with name `[PersonName].jpg`
+mFaceRec.train()
 ```
+
+## Todos
+This app currently uses [HOG based face detector](http://dlib.net/dnn_introduction_ex.cpp.html). This detector fails to detect small faces and is not very accurate. Instead we can use [CNN based face detector](http://dlib.net/dnn_mmod_face_detection_ex.cpp.html), which is very accurate but will take much more time.
 
 ## Contact
 If you need any help, you can contact me on email `gv22ga@gmail.com`
