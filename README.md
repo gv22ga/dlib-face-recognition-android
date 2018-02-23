@@ -1,6 +1,5 @@
 # dlib-face-recognition-android
-Recognize faces in android using DLib state-of-the-art face recognition model based on deep learning. The model has an accuracy 
-of 99.13% on the LFW benchmark.
+Recognize faces in android using dlib state-of-the-art face recognition model based on deep learning. The model has an accuracy of 99.13% on the LFW benchmark.
 
 ## App
 [Video to be added]
