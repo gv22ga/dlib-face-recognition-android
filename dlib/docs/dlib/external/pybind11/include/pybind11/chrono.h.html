@@ -1,0 +1,165 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - chrono.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>/*
+    pybind11/chrono.h: Transparent conversion between std::chrono and python's datetime
+
+    Copyright (c) 2016 Trent Houliston &lt;trent@houliston.me&gt; and
+                       Wenzel Jakob &lt;wenzel.jakob@epfl.ch&gt;
+
+    All rights reserved. Use of this source code is governed by a
+    BSD-style license that can be found in the LICENSE file.
+*/</font>
+
+<font color='#0000FF'>#pragma</font> once
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='pybind11.h.html'>pybind11.h</a>"
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>cmath<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>ctime<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>chrono<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>datetime.h<font color='#5555FF'>&gt;</font>
+
+<font color='#009900'>// Backport the PyDateTime_DELTA functions from Python3.3 if required
+</font><font color='#0000FF'>#ifndef</font> PyDateTime_DELTA_GET_DAYS
+<font color='#0000FF'>#define</font> PyDateTime_DELTA_GET_DAYS<font face='Lucida Console'>(</font>o<font face='Lucida Console'>)</font>         <font face='Lucida Console'>(</font><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyDateTime_Delta<font color='#5555FF'>*</font><font face='Lucida Console'>)</font>o<font face='Lucida Console'>)</font><font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>days<font face='Lucida Console'>)</font>
+<font color='#0000FF'>#endif</font>
+<font color='#0000FF'>#ifndef</font> PyDateTime_DELTA_GET_SECONDS
+<font color='#0000FF'>#define</font> PyDateTime_DELTA_GET_SECONDS<font face='Lucida Console'>(</font>o<font face='Lucida Console'>)</font>      <font face='Lucida Console'>(</font><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyDateTime_Delta<font color='#5555FF'>*</font><font face='Lucida Console'>)</font>o<font face='Lucida Console'>)</font><font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>seconds<font face='Lucida Console'>)</font>
+<font color='#0000FF'>#endif</font>
+<font color='#0000FF'>#ifndef</font> PyDateTime_DELTA_GET_MICROSECONDS
+<font color='#0000FF'>#define</font> PyDateTime_DELTA_GET_MICROSECONDS<font face='Lucida Console'>(</font>o<font face='Lucida Console'>)</font> <font face='Lucida Console'>(</font><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyDateTime_Delta<font color='#5555FF'>*</font><font face='Lucida Console'>)</font>o<font face='Lucida Console'>)</font><font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>microseconds<font face='Lucida Console'>)</font>
+<font color='#0000FF'>#endif</font>
+
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> type<font color='#5555FF'>&gt;</font> <font color='#0000FF'>class</font> <b><a name='duration_caster'></a>duration_caster</b> <b>{</b>
+<font color='#0000FF'>public</font>:
+    <font color='#0000FF'>typedef</font> <font color='#0000FF'>typename</font> type::rep rep;
+    <font color='#0000FF'>typedef</font> <font color='#0000FF'>typename</font> type::period period;
+
+    <font color='#0000FF'>typedef</font> std::chrono::duration<font color='#5555FF'>&lt;</font>uint_fast32_t, std::ratio<font color='#5555FF'>&lt;</font><font color='#979000'>86400</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> days;
+
+    <font color='#0000FF'><u>bool</u></font> <b><a name='load'></a>load</b><font face='Lucida Console'>(</font>handle src, <font color='#0000FF'><u>bool</u></font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>using</font> <font color='#0000FF'>namespace</font> std::chrono;
+
+        <font color='#009900'>// Lazy initialise the PyDateTime import
+</font>        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>PyDateTimeAPI<font face='Lucida Console'>)</font> <b>{</b> PyDateTime_IMPORT; <b>}</b>
+
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>src<font face='Lucida Console'>)</font> <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+        <font color='#009900'>// If invoked with datetime.delta object
+</font>        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#BB00BB'>PyDelta_Check</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+            value <font color='#5555FF'>=</font> <font color='#BB00BB'>type</font><font face='Lucida Console'>(</font>duration_cast<font color='#5555FF'>&lt;</font>duration<font color='#5555FF'>&lt;</font>rep, period<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>
+                  <font color='#BB00BB'>days</font><font face='Lucida Console'>(</font><font color='#BB00BB'>PyDateTime_DELTA_GET_DAYS</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+                <font color='#5555FF'>+</font> <font color='#BB00BB'>seconds</font><font face='Lucida Console'>(</font><font color='#BB00BB'>PyDateTime_DELTA_GET_SECONDS</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+                <font color='#5555FF'>+</font> <font color='#BB00BB'>microseconds</font><font face='Lucida Console'>(</font><font color='#BB00BB'>PyDateTime_DELTA_GET_MICROSECONDS</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>return</font> <font color='#979000'>true</font>;
+        <b>}</b>
+        <font color='#009900'>// If invoked with a float we assume it is seconds and convert
+</font>        <font color='#0000FF'>else</font> <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#BB00BB'>PyFloat_Check</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+            value <font color='#5555FF'>=</font> <font color='#BB00BB'>type</font><font face='Lucida Console'>(</font>duration_cast<font color='#5555FF'>&lt;</font>duration<font color='#5555FF'>&lt;</font>rep, period<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>duration<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font color='#BB00BB'>PyFloat_AsDouble</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>return</font> <font color='#979000'>true</font>;
+        <b>}</b>
+        <font color='#0000FF'>else</font> <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+    <b>}</b>
+
+    <font color='#009900'>// If this is a duration just return it back
+</font>    <font color='#0000FF'>static</font> <font color='#0000FF'>const</font> std::chrono::duration<font color='#5555FF'>&lt;</font>rep, period<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> <b><a name='get_duration'></a>get_duration</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> std::chrono::duration<font color='#5555FF'>&lt;</font>rep, period<font color='#5555FF'>&gt;</font> <font color='#5555FF'>&amp;</font>src<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>return</font> src;
+    <b>}</b>
+
+    <font color='#009900'>// If this is a time_point get the time_since_epoch
+</font>    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Clock<font color='#5555FF'>&gt;</font> <font color='#0000FF'>static</font> std::chrono::duration<font color='#5555FF'>&lt;</font>rep, period<font color='#5555FF'>&gt;</font> <b><a name='get_duration'></a>get_duration</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> std::chrono::time_point<font color='#5555FF'>&lt;</font>Clock, std::chrono::duration<font color='#5555FF'>&lt;</font>rep, period<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> <font color='#5555FF'>&amp;</font>src<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>return</font> src.<font color='#BB00BB'>time_since_epoch</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>static</font> handle <b><a name='cast'></a>cast</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> type <font color='#5555FF'>&amp;</font>src, return_value_policy <font color='#009900'>/* policy */</font>, handle <font color='#009900'>/* parent */</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>using</font> <font color='#0000FF'>namespace</font> std::chrono;
+
+        <font color='#009900'>// Use overloaded function to get our duration from our source
+</font>        <font color='#009900'>// Works out if it is a duration or time_point and get the duration
+</font>        <font color='#0000FF'>auto</font> d <font color='#5555FF'>=</font> <font color='#BB00BB'>get_duration</font><font face='Lucida Console'>(</font>src<font face='Lucida Console'>)</font>;
+
+        <font color='#009900'>// Lazy initialise the PyDateTime import
+</font>        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>PyDateTimeAPI<font face='Lucida Console'>)</font> <b>{</b> PyDateTime_IMPORT; <b>}</b>
+
+        <font color='#009900'>// Declare these special duration types so the conversions happen with the correct primitive types (int)
+</font>        <font color='#0000FF'>using</font> dd_t <font color='#5555FF'>=</font> duration<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>int</u></font>, std::ratio<font color='#5555FF'>&lt;</font><font color='#979000'>86400</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>;
+        <font color='#0000FF'>using</font> ss_t <font color='#5555FF'>=</font> duration<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>int</u></font>, std::ratio<font color='#5555FF'>&lt;</font><font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>;
+        <font color='#0000FF'>using</font> us_t <font color='#5555FF'>=</font> duration<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>int</u></font>, std::micro<font color='#5555FF'>&gt;</font>;
+
+        <font color='#0000FF'>auto</font> dd <font color='#5555FF'>=</font> duration_cast<font color='#5555FF'>&lt;</font>dd_t<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>d<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>auto</font> subd <font color='#5555FF'>=</font> d <font color='#5555FF'>-</font> dd;
+        <font color='#0000FF'>auto</font> ss <font color='#5555FF'>=</font> duration_cast<font color='#5555FF'>&lt;</font>ss_t<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>subd<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>auto</font> us <font color='#5555FF'>=</font> duration_cast<font color='#5555FF'>&lt;</font>us_t<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>subd <font color='#5555FF'>-</font> ss<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>PyDelta_FromDSU</font><font face='Lucida Console'>(</font>dd.<font color='#BB00BB'>count</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, ss.<font color='#BB00BB'>count</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, us.<font color='#BB00BB'>count</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <b><a name='PYBIND11_TYPE_CASTER'></a>PYBIND11_TYPE_CASTER</b><font face='Lucida Console'>(</font>type, <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>datetime.timedelta</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+<b>}</b>;
+
+<font color='#009900'>// This is for casting times on the system clock into datetime.datetime instances
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Duration<font color='#5555FF'>&gt;</font> <font color='#0000FF'>class</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::chrono::time_point<font color='#5555FF'>&lt;</font>std::chrono::system_clock, Duration<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> <b>{</b>
+<font color='#0000FF'>public</font>:
+    <font color='#0000FF'>typedef</font> std::chrono::time_point<font color='#5555FF'>&lt;</font>std::chrono::system_clock, Duration<font color='#5555FF'>&gt;</font> type;
+    <font color='#0000FF'><u>bool</u></font> <b><a name='load'></a>load</b><font face='Lucida Console'>(</font>handle src, <font color='#0000FF'><u>bool</u></font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>using</font> <font color='#0000FF'>namespace</font> std::chrono;
+
+        <font color='#009900'>// Lazy initialise the PyDateTime import
+</font>        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>PyDateTimeAPI<font face='Lucida Console'>)</font> <b>{</b> PyDateTime_IMPORT; <b>}</b>
+
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>src<font face='Lucida Console'>)</font> <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#BB00BB'>PyDateTime_Check</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+            std::tm cal;
+            cal.tm_sec   <font color='#5555FF'>=</font> <font color='#BB00BB'>PyDateTime_DATE_GET_SECOND</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            cal.tm_min   <font color='#5555FF'>=</font> <font color='#BB00BB'>PyDateTime_DATE_GET_MINUTE</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            cal.tm_hour  <font color='#5555FF'>=</font> <font color='#BB00BB'>PyDateTime_DATE_GET_HOUR</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            cal.tm_mday  <font color='#5555FF'>=</font> <font color='#BB00BB'>PyDateTime_GET_DAY</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            cal.tm_mon   <font color='#5555FF'>=</font> <font color='#BB00BB'>PyDateTime_GET_MONTH</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <font color='#5555FF'>-</font> <font color='#979000'>1</font>;
+            cal.tm_year  <font color='#5555FF'>=</font> <font color='#BB00BB'>PyDateTime_GET_YEAR</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <font color='#5555FF'>-</font> <font color='#979000'>1900</font>;
+            cal.tm_isdst <font color='#5555FF'>=</font> <font color='#5555FF'>-</font><font color='#979000'>1</font>;
+
+            value <font color='#5555FF'>=</font> system_clock::<font color='#BB00BB'>from_time_t</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>mktime</font><font face='Lucida Console'>(</font><font color='#5555FF'>&amp;</font>cal<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> <font color='#BB00BB'>microseconds</font><font face='Lucida Console'>(</font><font color='#BB00BB'>PyDateTime_DATE_GET_MICROSECOND</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>return</font> <font color='#979000'>true</font>;
+        <b>}</b>
+        <font color='#0000FF'>else</font> <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>static</font> handle <b><a name='cast'></a>cast</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> std::chrono::time_point<font color='#5555FF'>&lt;</font>std::chrono::system_clock, Duration<font color='#5555FF'>&gt;</font> <font color='#5555FF'>&amp;</font>src, return_value_policy <font color='#009900'>/* policy */</font>, handle <font color='#009900'>/* parent */</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>using</font> <font color='#0000FF'>namespace</font> std::chrono;
+
+        <font color='#009900'>// Lazy initialise the PyDateTime import
+</font>        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>PyDateTimeAPI<font face='Lucida Console'>)</font> <b>{</b> PyDateTime_IMPORT; <b>}</b>
+
+        std::time_t tt <font color='#5555FF'>=</font> system_clock::<font color='#BB00BB'>to_time_t</font><font face='Lucida Console'>(</font>src<font face='Lucida Console'>)</font>;
+        <font color='#009900'>// this function uses static memory so it's best to copy it out asap just in case
+</font>        <font color='#009900'>// otherwise other code that is using localtime may break this (not just python code)
+</font>        std::tm localtime <font color='#5555FF'>=</font> <font color='#5555FF'>*</font>std::<font color='#BB00BB'>localtime</font><font face='Lucida Console'>(</font><font color='#5555FF'>&amp;</font>tt<font face='Lucida Console'>)</font>;
+
+        <font color='#009900'>// Declare these special duration types so the conversions happen with the correct primitive types (int)
+</font>        <font color='#0000FF'>using</font> us_t <font color='#5555FF'>=</font> duration<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>int</u></font>, std::micro<font color='#5555FF'>&gt;</font>;
+
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>PyDateTime_FromDateAndTime</font><font face='Lucida Console'>(</font>localtime.tm_year <font color='#5555FF'>+</font> <font color='#979000'>1900</font>,
+                                          localtime.tm_mon <font color='#5555FF'>+</font> <font color='#979000'>1</font>,
+                                          localtime.tm_mday,
+                                          localtime.tm_hour,
+                                          localtime.tm_min,
+                                          localtime.tm_sec,
+                                          <font face='Lucida Console'>(</font>duration_cast<font color='#5555FF'>&lt;</font>us_t<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>time_since_epoch</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>%</font> <font color='#BB00BB'>seconds</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>count</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+    <b><a name='PYBIND11_TYPE_CASTER'></a>PYBIND11_TYPE_CASTER</b><font face='Lucida Console'>(</font>type, <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>datetime.datetime</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+<b>}</b>;
+
+<font color='#009900'>// Other clocks that are not the system clock are not measured as datetime.datetime objects
+</font><font color='#009900'>// since they are not measured on calendar time. So instead we just make them timedeltas
+</font><font color='#009900'>// Or if they have passed us a time as a float we convert that
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Clock, <font color='#0000FF'>typename</font> Duration<font color='#5555FF'>&gt;</font> <font color='#0000FF'>class</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::chrono::time_point<font color='#5555FF'>&lt;</font>Clock, Duration<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>
+: <font color='#0000FF'>public</font> duration_caster<font color='#5555FF'>&lt;</font>std::chrono::time_point<font color='#5555FF'>&lt;</font>Clock, Duration<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> <b>{</b>
+<b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Rep, <font color='#0000FF'>typename</font> Period<font color='#5555FF'>&gt;</font> <font color='#0000FF'>class</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::chrono::duration<font color='#5555FF'>&lt;</font>Rep, Period<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>
+: <font color='#0000FF'>public</font> duration_caster<font color='#5555FF'>&lt;</font>std::chrono::duration<font color='#5555FF'>&lt;</font>Rep, Period<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> <b>{</b>
+<b>}</b>;
+
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+
+</pre></body></html>

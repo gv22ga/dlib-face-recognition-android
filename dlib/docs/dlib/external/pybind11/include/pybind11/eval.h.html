@@ -1,0 +1,120 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - eval.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>/*
+    pybind11/exec.h: Support for evaluating Python expressions and statements
+    from strings and files
+
+    Copyright (c) 2016 Klemens Morgenstern &lt;klemens.morgenstern@ed-chemnitz.de&gt; and
+                       Wenzel Jakob &lt;wenzel.jakob@epfl.ch&gt;
+
+    All rights reserved. Use of this source code is governed by a
+    BSD-style license that can be found in the LICENSE file.
+*/</font>
+
+<font color='#0000FF'>#pragma</font> once
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='pybind11.h.html'>pybind11.h</a>"
+
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+
+<font color='#0000FF'>enum</font> <b><a name='eval_mode'></a>eval_mode</b> <b>{</b>
+    <font color='#009900'>/// Evaluate a string containing an isolated expression
+</font>    eval_expr,
+
+    <font color='#009900'>/// Evaluate a string containing a single statement. Returns \c none
+</font>    eval_single_statement,
+
+    <font color='#009900'>/// Evaluate a string containing a sequence of statement. Returns \c none
+</font>    eval_statements
+<b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>eval_mode mode <font color='#5555FF'>=</font> eval_expr<font color='#5555FF'>&gt;</font>
+object <b><a name='eval'></a>eval</b><font face='Lucida Console'>(</font>str expr, object global <font color='#5555FF'>=</font> <font color='#BB00BB'>globals</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, object local <font color='#5555FF'>=</font> <font color='#BB00BB'>object</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>local<font face='Lucida Console'>)</font>
+        local <font color='#5555FF'>=</font> global;
+
+    <font color='#009900'>/* PyRun_String does not accept a PyObject / encoding specifier,
+       this seems to be the only alternative */</font>
+    std::string buffer <font color='#5555FF'>=</font> "<font color='#CC0000'># -*- coding: utf-8 -*-\n</font>" <font color='#5555FF'>+</font> <font face='Lucida Console'>(</font>std::string<font face='Lucida Console'>)</font> expr;
+
+    <font color='#0000FF'><u>int</u></font> start;
+    <font color='#0000FF'>switch</font> <font face='Lucida Console'>(</font>mode<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>case</font> eval_expr:             start <font color='#5555FF'>=</font> Py_eval_input;   <font color='#0000FF'>break</font>;
+        <font color='#0000FF'>case</font> eval_single_statement: start <font color='#5555FF'>=</font> Py_single_input; <font color='#0000FF'>break</font>;
+        <font color='#0000FF'>case</font> eval_statements:       start <font color='#5555FF'>=</font> Py_file_input;   <font color='#0000FF'>break</font>;
+        <font color='#0000FF'>default</font>: <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>invalid evaluation mode</font>"<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    PyObject <font color='#5555FF'>*</font>result <font color='#5555FF'>=</font> <font color='#BB00BB'>PyRun_String</font><font face='Lucida Console'>(</font>buffer.<font color='#BB00BB'>c_str</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, start, global.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, local.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>result<font face='Lucida Console'>)</font>
+        <font color='#0000FF'>throw</font> <font color='#BB00BB'>error_already_set</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> reinterpret_steal<font color='#5555FF'>&lt;</font>object<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>result<font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>eval_mode mode <font color='#5555FF'>=</font> eval_expr, <font color='#0000FF'><u>size_t</u></font> N<font color='#5555FF'>&gt;</font>
+object <b><a name='eval'></a>eval</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font face='Lucida Console'>(</font><font color='#5555FF'>&amp;</font>s<font face='Lucida Console'>)</font>[N], object global <font color='#5555FF'>=</font> <font color='#BB00BB'>globals</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, object local <font color='#5555FF'>=</font> <font color='#BB00BB'>object</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#009900'>/* Support raw string literals by removing common leading whitespace */</font>
+    <font color='#0000FF'>auto</font> expr <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>s[<font color='#979000'>0</font>] <font color='#5555FF'>=</font><font color='#5555FF'>=</font> '<font color='#FF0000'>\n</font>'<font face='Lucida Console'>)</font> ? <font color='#BB00BB'>str</font><font face='Lucida Console'>(</font>module::<font color='#BB00BB'>import</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>textwrap</font>"<font face='Lucida Console'>)</font>.<font color='#BB00BB'>attr</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>dedent</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>(</font>s<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+                               : <font color='#BB00BB'>str</font><font face='Lucida Console'>(</font>s<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> eval<font color='#5555FF'>&lt;</font>mode<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>expr, global, local<font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#0000FF'>inline</font> <font color='#0000FF'><u>void</u></font> <b><a name='exec'></a>exec</b><font face='Lucida Console'>(</font>str expr, object global <font color='#5555FF'>=</font> <font color='#BB00BB'>globals</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, object local <font color='#5555FF'>=</font> <font color='#BB00BB'>object</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+    eval<font color='#5555FF'>&lt;</font>eval_statements<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>expr, global, local<font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font> N<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'><u>void</u></font> <b><a name='exec'></a>exec</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font face='Lucida Console'>(</font><font color='#5555FF'>&amp;</font>s<font face='Lucida Console'>)</font>[N], object global <font color='#5555FF'>=</font> <font color='#BB00BB'>globals</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, object local <font color='#5555FF'>=</font> <font color='#BB00BB'>object</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+    eval<font color='#5555FF'>&lt;</font>eval_statements<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>s, global, local<font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>eval_mode mode <font color='#5555FF'>=</font> eval_statements<font color='#5555FF'>&gt;</font>
+object <b><a name='eval_file'></a>eval_file</b><font face='Lucida Console'>(</font>str fname, object global <font color='#5555FF'>=</font> <font color='#BB00BB'>globals</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, object local <font color='#5555FF'>=</font> <font color='#BB00BB'>object</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>local<font face='Lucida Console'>)</font>
+        local <font color='#5555FF'>=</font> global;
+
+    <font color='#0000FF'><u>int</u></font> start;
+    <font color='#0000FF'>switch</font> <font face='Lucida Console'>(</font>mode<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>case</font> eval_expr:             start <font color='#5555FF'>=</font> Py_eval_input;   <font color='#0000FF'>break</font>;
+        <font color='#0000FF'>case</font> eval_single_statement: start <font color='#5555FF'>=</font> Py_single_input; <font color='#0000FF'>break</font>;
+        <font color='#0000FF'>case</font> eval_statements:       start <font color='#5555FF'>=</font> Py_file_input;   <font color='#0000FF'>break</font>;
+        <font color='#0000FF'>default</font>: <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>invalid evaluation mode</font>"<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'><u>int</u></font> closeFile <font color='#5555FF'>=</font> <font color='#979000'>1</font>;
+    std::string fname_str <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>std::string<font face='Lucida Console'>)</font> fname;
+<font color='#0000FF'>#if</font> PY_VERSION_HEX <font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font> <font color='#979000'>0x03040000</font>
+    FILE <font color='#5555FF'>*</font>f <font color='#5555FF'>=</font> <font color='#BB00BB'>_Py_fopen_obj</font><font face='Lucida Console'>(</font>fname.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, "<font color='#CC0000'>r</font>"<font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#elif</font> PY_VERSION_HEX <font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font> <font color='#979000'>0x03000000</font>
+    FILE <font color='#5555FF'>*</font>f <font color='#5555FF'>=</font> <font color='#BB00BB'>_Py_fopen</font><font face='Lucida Console'>(</font>fname.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, "<font color='#CC0000'>r</font>"<font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#else</font>
+    <font color='#009900'>/* No unicode support in open() :( */</font>
+    <font color='#0000FF'>auto</font> fobj <font color='#5555FF'>=</font> reinterpret_steal<font color='#5555FF'>&lt;</font>object<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font color='#BB00BB'>PyFile_FromString</font><font face='Lucida Console'>(</font>
+        <font color='#0000FF'>const_cast</font><font color='#5555FF'>&lt;</font><font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>fname_str.<font color='#BB00BB'>c_str</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>,
+        <font color='#0000FF'>const_cast</font><font color='#5555FF'>&lt;</font><font color='#0000FF'><u>char</u></font><font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>r</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    FILE <font color='#5555FF'>*</font>f <font color='#5555FF'>=</font> nullptr;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>fobj<font face='Lucida Console'>)</font>
+        f <font color='#5555FF'>=</font> <font color='#BB00BB'>PyFile_AsFile</font><font face='Lucida Console'>(</font>fobj.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    closeFile <font color='#5555FF'>=</font> <font color='#979000'>0</font>;
+<font color='#0000FF'>#endif</font>
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>f<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#BB00BB'>PyErr_Clear</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+        <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>File \"</font>" <font color='#5555FF'>+</font> fname_str <font color='#5555FF'>+</font> "<font color='#CC0000'>\" could not be opened!</font>"<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+<font color='#0000FF'>#if</font> PY_VERSION_HEX <font color='#5555FF'>&lt;</font> <font color='#979000'>0x03000000</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> defined<font face='Lucida Console'>(</font>PYPY_VERSION<font face='Lucida Console'>)</font>
+    PyObject <font color='#5555FF'>*</font>result <font color='#5555FF'>=</font> <font color='#BB00BB'>PyRun_File</font><font face='Lucida Console'>(</font>f, fname_str.<font color='#BB00BB'>c_str</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, start, global.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>,
+                                  local.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <font face='Lucida Console'>(</font><font color='#0000FF'><u>void</u></font><font face='Lucida Console'>)</font> closeFile;
+<font color='#0000FF'>#else</font>
+    PyObject <font color='#5555FF'>*</font>result <font color='#5555FF'>=</font> <font color='#BB00BB'>PyRun_FileEx</font><font face='Lucida Console'>(</font>f, fname_str.<font color='#BB00BB'>c_str</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, start, global.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>,
+                                    local.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, closeFile<font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#endif</font>
+
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>result<font face='Lucida Console'>)</font>
+        <font color='#0000FF'>throw</font> <font color='#BB00BB'>error_already_set</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> reinterpret_steal<font color='#5555FF'>&lt;</font>object<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>result<font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+
+</pre></body></html>

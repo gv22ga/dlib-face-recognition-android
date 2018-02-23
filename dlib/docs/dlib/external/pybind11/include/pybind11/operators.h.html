@@ -1,0 +1,171 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - operators.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>/*
+    pybind11/operator.h: Metatemplates for operator overloading
+
+    Copyright (c) 2016 Wenzel Jakob &lt;wenzel.jakob@epfl.ch&gt;
+
+    All rights reserved. Use of this source code is governed by a
+    BSD-style license that can be found in the LICENSE file.
+*/</font>
+
+<font color='#0000FF'>#pragma</font> once
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='pybind11.h.html'>pybind11.h</a>"
+
+<font color='#0000FF'>#if</font> defined<font face='Lucida Console'>(</font>__clang__<font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font color='#5555FF'>!</font>defined<font face='Lucida Console'>(</font>__INTEL_COMPILER<font face='Lucida Console'>)</font>
+#  pragma clang diagnostic ignored "<font color='#CC0000'>-Wunsequenced</font>" <font color='#009900'>// multiple unsequenced modifications to 'self' (when using def(py::self OP Type()))
+</font><font color='#0000FF'>#elif</font> defined<font face='Lucida Console'>(</font>_MSC_VER<font face='Lucida Console'>)</font>
+#  pragma <b><a name='warning'></a>warning</b><font face='Lucida Console'>(</font>push<font face='Lucida Console'>)</font>
+#  pragma <b><a name='warning'></a>warning</b><font face='Lucida Console'>(</font>disable: <font color='#979000'>4127</font><font face='Lucida Console'>)</font> <font color='#009900'>// warning C4127: Conditional expression is constant
+</font><font color='#0000FF'>#endif</font>
+
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+
+<font color='#009900'>/// Enumeration with all supported operator types
+</font><font color='#0000FF'>enum</font> <b><a name='op_id'></a>op_id</b> : <font color='#0000FF'><u>int</u></font> <b>{</b>
+    op_add, op_sub, op_mul, op_div, op_mod, op_divmod, op_pow, op_lshift,
+    op_rshift, op_and, op_xor, op_or, op_neg, op_pos, op_abs, op_invert,
+    op_int, op_long, op_float, op_str, op_cmp, op_gt, op_ge, op_lt, op_le,
+    op_eq, op_ne, op_iadd, op_isub, op_imul, op_idiv, op_imod, op_ilshift,
+    op_irshift, op_iand, op_ixor, op_ior, op_complex, op_bool, op_nonzero,
+    op_repr, op_truediv, op_itruediv, op_hash
+<b>}</b>;
+
+<font color='#0000FF'>enum</font> <b><a name='op_type'></a>op_type</b> : <font color='#0000FF'><u>int</u></font> <b>{</b>
+    op_l, <font color='#009900'>/* base type on left */</font>
+    op_r, <font color='#009900'>/* base type on right */</font>
+    op_u  <font color='#009900'>/* unary operator */</font>
+<b>}</b>;
+
+<font color='#0000FF'>struct</font> <b><a name='self_t'></a>self_t</b> <b>{</b> <b>}</b>;
+<font color='#0000FF'>static</font> <font color='#0000FF'>const</font> self_t self <font color='#5555FF'>=</font> <b><a name='self_t'></a>self_t</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+
+<font color='#009900'>/// Type for an unused type slot
+</font><font color='#0000FF'>struct</font> <b><a name='undefined_t'></a>undefined_t</b> <b>{</b> <b>}</b>;
+
+<font color='#009900'>/// Don't warn about an unused variable
+</font><font color='#0000FF'>inline</font> self_t <b><a name='__self'></a>__self</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> self; <b>}</b>
+
+<font color='#009900'>/// base template of operator implementations
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>op_id, op_type, <font color='#0000FF'>typename</font> B, <font color='#0000FF'>typename</font> L, <font color='#0000FF'>typename</font> R<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='op_impl'></a>op_impl</b> <b>{</b> <b>}</b>;
+
+<font color='#009900'>/// Operator implementation generator
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>op_id id, op_type ot, <font color='#0000FF'>typename</font> L, <font color='#0000FF'>typename</font> R<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='op_'></a>op_</b> <b>{</b>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Class, <font color='#0000FF'>typename</font>... Extra<font color='#5555FF'>&gt;</font> <font color='#0000FF'><u>void</u></font> <b><a name='execute'></a>execute</b><font face='Lucida Console'>(</font>Class <font color='#5555FF'>&amp;</font>cl, <font color='#0000FF'>const</font> Extra<font color='#5555FF'>&amp;</font>... extra<font face='Lucida Console'>)</font> <font color='#0000FF'>const</font> <b>{</b>
+        <font color='#0000FF'>using</font> Base <font color='#5555FF'>=</font> <font color='#0000FF'>typename</font> Class::type;
+        <font color='#0000FF'>using</font> L_type <font color='#5555FF'>=</font> conditional_t<font color='#5555FF'>&lt;</font>std::is_same<font color='#5555FF'>&lt;</font>L, self_t<font color='#5555FF'>&gt;</font>::value, Base, L<font color='#5555FF'>&gt;</font>;
+        <font color='#0000FF'>using</font> R_type <font color='#5555FF'>=</font> conditional_t<font color='#5555FF'>&lt;</font>std::is_same<font color='#5555FF'>&lt;</font>R, self_t<font color='#5555FF'>&gt;</font>::value, Base, R<font color='#5555FF'>&gt;</font>;
+        <font color='#0000FF'>using</font> op <font color='#5555FF'>=</font> op_impl<font color='#5555FF'>&lt;</font>id, ot, Base, L_type, R_type<font color='#5555FF'>&gt;</font>;
+        cl.<font color='#BB00BB'>def</font><font face='Lucida Console'>(</font>op::<font color='#BB00BB'>name</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, <font color='#5555FF'>&amp;</font>op::execute, <font color='#BB00BB'>is_operator</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, extra...<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>#if</font> PY_MAJOR_VERSION <font color='#5555FF'>&lt;</font> <font color='#979000'>3</font>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>id <font color='#5555FF'>=</font><font color='#5555FF'>=</font> op_truediv <font color='#5555FF'>|</font><font color='#5555FF'>|</font> id <font color='#5555FF'>=</font><font color='#5555FF'>=</font> op_itruediv<font face='Lucida Console'>)</font>
+            cl.<font color='#BB00BB'>def</font><font face='Lucida Console'>(</font>id <font color='#5555FF'>=</font><font color='#5555FF'>=</font> op_itruediv ? "<font color='#CC0000'>__idiv__</font>" : ot <font color='#5555FF'>=</font><font color='#5555FF'>=</font> op_l ? "<font color='#CC0000'>__div__</font>" : "<font color='#CC0000'>__rdiv__</font>",
+                    <font color='#5555FF'>&amp;</font>op::execute, <font color='#BB00BB'>is_operator</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, extra...<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>#endif</font>
+    <b>}</b>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Class, <font color='#0000FF'>typename</font>... Extra<font color='#5555FF'>&gt;</font> <font color='#0000FF'><u>void</u></font> <b><a name='execute_cast'></a>execute_cast</b><font face='Lucida Console'>(</font>Class <font color='#5555FF'>&amp;</font>cl, <font color='#0000FF'>const</font> Extra<font color='#5555FF'>&amp;</font>... extra<font face='Lucida Console'>)</font> <font color='#0000FF'>const</font> <b>{</b>
+        <font color='#0000FF'>using</font> Base <font color='#5555FF'>=</font> <font color='#0000FF'>typename</font> Class::type;
+        <font color='#0000FF'>using</font> L_type <font color='#5555FF'>=</font> conditional_t<font color='#5555FF'>&lt;</font>std::is_same<font color='#5555FF'>&lt;</font>L, self_t<font color='#5555FF'>&gt;</font>::value, Base, L<font color='#5555FF'>&gt;</font>;
+        <font color='#0000FF'>using</font> R_type <font color='#5555FF'>=</font> conditional_t<font color='#5555FF'>&lt;</font>std::is_same<font color='#5555FF'>&lt;</font>R, self_t<font color='#5555FF'>&gt;</font>::value, Base, R<font color='#5555FF'>&gt;</font>;
+        <font color='#0000FF'>using</font> op <font color='#5555FF'>=</font> op_impl<font color='#5555FF'>&lt;</font>id, ot, Base, L_type, R_type<font color='#5555FF'>&gt;</font>;
+        cl.<font color='#BB00BB'>def</font><font face='Lucida Console'>(</font>op::<font color='#BB00BB'>name</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, <font color='#5555FF'>&amp;</font>op::execute_cast, <font color='#BB00BB'>is_operator</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, extra...<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>#if</font> PY_MAJOR_VERSION <font color='#5555FF'>&lt;</font> <font color='#979000'>3</font>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>id <font color='#5555FF'>=</font><font color='#5555FF'>=</font> op_truediv <font color='#5555FF'>|</font><font color='#5555FF'>|</font> id <font color='#5555FF'>=</font><font color='#5555FF'>=</font> op_itruediv<font face='Lucida Console'>)</font>
+            cl.<font color='#BB00BB'>def</font><font face='Lucida Console'>(</font>id <font color='#5555FF'>=</font><font color='#5555FF'>=</font> op_itruediv ? "<font color='#CC0000'>__idiv__</font>" : ot <font color='#5555FF'>=</font><font color='#5555FF'>=</font> op_l ? "<font color='#CC0000'>__div__</font>" : "<font color='#CC0000'>__rdiv__</font>",
+                    <font color='#5555FF'>&amp;</font>op::execute, <font color='#BB00BB'>is_operator</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, extra...<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>#endif</font>
+    <b>}</b>
+<b>}</b>;
+
+<font color='#0000FF'>#define</font> PYBIND11_BINARY_OPERATOR<font face='Lucida Console'>(</font>id, rid, op, expr<font face='Lucida Console'>)</font>                                    \
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> B, <font color='#0000FF'>typename</font> L, <font color='#0000FF'>typename</font> R<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='op_impl'></a>op_impl</b><font color='#5555FF'>&lt;</font>op_##id, op_l, B, L, R<font color='#5555FF'>&gt;</font> <b>{</b> \
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>char</u></font> <font color='#0000FF'>const</font><font color='#5555FF'>*</font> <b><a name='name'></a>name</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> "<font color='#CC0000'>__</font>" #id "<font color='#CC0000'>__</font>"; <b>}</b>                                \
+    <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='execute'></a>execute</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> L <font color='#5555FF'>&amp;</font>l, <font color='#0000FF'>const</font> R <font color='#5555FF'>&amp;</font>r<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font>expr<font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> <font face='Lucida Console'>(</font>expr<font face='Lucida Console'>)</font>; <b>}</b>   \
+    <font color='#0000FF'>static</font> B <b><a name='execute_cast'></a>execute_cast</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> L <font color='#5555FF'>&amp;</font>l, <font color='#0000FF'>const</font> R <font color='#5555FF'>&amp;</font>r<font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> <font color='#BB00BB'>B</font><font face='Lucida Console'>(</font>expr<font face='Lucida Console'>)</font>; <b>}</b>                  \
+<b>}</b>;                                                                                     \
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> B, <font color='#0000FF'>typename</font> L, <font color='#0000FF'>typename</font> R<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='op_impl'></a>op_impl</b><font color='#5555FF'>&lt;</font>op_##id, op_r, B, L, R<font color='#5555FF'>&gt;</font> <b>{</b> \
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>char</u></font> <font color='#0000FF'>const</font><font color='#5555FF'>*</font> <b><a name='name'></a>name</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> "<font color='#CC0000'>__</font>" #rid "<font color='#CC0000'>__</font>"; <b>}</b>                               \
+    <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='execute'></a>execute</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> R <font color='#5555FF'>&amp;</font>r, <font color='#0000FF'>const</font> L <font color='#5555FF'>&amp;</font>l<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font>expr<font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> <font face='Lucida Console'>(</font>expr<font face='Lucida Console'>)</font>; <b>}</b>   \
+    <font color='#0000FF'>static</font> B <b><a name='execute_cast'></a>execute_cast</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> R <font color='#5555FF'>&amp;</font>r, <font color='#0000FF'>const</font> L <font color='#5555FF'>&amp;</font>l<font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> <font color='#BB00BB'>B</font><font face='Lucida Console'>(</font>expr<font face='Lucida Console'>)</font>; <b>}</b>                  \
+<b>}</b>;                                                                                     \
+<font color='#0000FF'>inline</font> op_<font color='#5555FF'>&lt;</font>op_##id, op_l, self_t, self_t<font color='#5555FF'>&gt;</font> <b><a name='op'></a>op</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> self_t <font color='#5555FF'>&amp;</font>, <font color='#0000FF'>const</font> self_t <font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <b>{</b>         \
+    <font color='#0000FF'>return</font> op_<font color='#5555FF'>&lt;</font>op_##id, op_l, self_t, self_t<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;                                       \
+<b>}</b>                                                                                      \
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> op_<font color='#5555FF'>&lt;</font>op_##id, op_l, self_t, T<font color='#5555FF'>&gt;</font> <b><a name='op'></a>op</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> self_t <font color='#5555FF'>&amp;</font>, <font color='#0000FF'>const</font> T <font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <b>{</b>    \
+    <font color='#0000FF'>return</font> op_<font color='#5555FF'>&lt;</font>op_##id, op_l, self_t, T<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;                                            \
+<b>}</b>                                                                                      \
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> op_<font color='#5555FF'>&lt;</font>op_##id, op_r, T, self_t<font color='#5555FF'>&gt;</font> <b><a name='op'></a>op</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> T <font color='#5555FF'>&amp;</font>, <font color='#0000FF'>const</font> self_t <font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <b>{</b>    \
+    <font color='#0000FF'>return</font> op_<font color='#5555FF'>&lt;</font>op_##id, op_r, T, self_t<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;                                            \
+<b>}</b>
+
+<font color='#0000FF'>#define</font> PYBIND11_INPLACE_OPERATOR<font face='Lucida Console'>(</font>id, op, expr<font face='Lucida Console'>)</font>                                        \
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> B, <font color='#0000FF'>typename</font> L, <font color='#0000FF'>typename</font> R<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='op_impl'></a>op_impl</b><font color='#5555FF'>&lt;</font>op_##id, op_l, B, L, R<font color='#5555FF'>&gt;</font> <b>{</b> \
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>char</u></font> <font color='#0000FF'>const</font><font color='#5555FF'>*</font> <b><a name='name'></a>name</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> "<font color='#CC0000'>__</font>" #id "<font color='#CC0000'>__</font>"; <b>}</b>                                \
+    <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='execute'></a>execute</b><font face='Lucida Console'>(</font>L <font color='#5555FF'>&amp;</font>l, <font color='#0000FF'>const</font> R <font color='#5555FF'>&amp;</font>r<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font>expr<font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> expr; <b>}</b>           \
+    <font color='#0000FF'>static</font> B <b><a name='execute_cast'></a>execute_cast</b><font face='Lucida Console'>(</font>L <font color='#5555FF'>&amp;</font>l, <font color='#0000FF'>const</font> R <font color='#5555FF'>&amp;</font>r<font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> <font color='#BB00BB'>B</font><font face='Lucida Console'>(</font>expr<font face='Lucida Console'>)</font>; <b>}</b>                        \
+<b>}</b>;                                                                                     \
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> op_<font color='#5555FF'>&lt;</font>op_##id, op_l, self_t, T<font color='#5555FF'>&gt;</font> <b><a name='op'></a>op</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> self_t <font color='#5555FF'>&amp;</font>, <font color='#0000FF'>const</font> T <font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <b>{</b>    \
+    <font color='#0000FF'>return</font> op_<font color='#5555FF'>&lt;</font>op_##id, op_l, self_t, T<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;                                            \
+<b>}</b>
+
+<font color='#0000FF'>#define</font> PYBIND11_UNARY_OPERATOR<font face='Lucida Console'>(</font>id, op, expr<font face='Lucida Console'>)</font>                                          \
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> B, <font color='#0000FF'>typename</font> L<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='op_impl'></a>op_impl</b><font color='#5555FF'>&lt;</font>op_##id, op_u, B, L, undefined_t<font color='#5555FF'>&gt;</font> <b>{</b>   \
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>char</u></font> <font color='#0000FF'>const</font><font color='#5555FF'>*</font> <b><a name='name'></a>name</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> "<font color='#CC0000'>__</font>" #id "<font color='#CC0000'>__</font>"; <b>}</b>                                \
+    <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='execute'></a>execute</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> L <font color='#5555FF'>&amp;</font>l<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font>expr<font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> expr; <b>}</b>                 \
+    <font color='#0000FF'>static</font> B <b><a name='execute_cast'></a>execute_cast</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> L <font color='#5555FF'>&amp;</font>l<font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> <font color='#BB00BB'>B</font><font face='Lucida Console'>(</font>expr<font face='Lucida Console'>)</font>; <b>}</b>                              \
+<b>}</b>;                                                                                     \
+<font color='#0000FF'>inline</font> op_<font color='#5555FF'>&lt;</font>op_##id, op_u, self_t, undefined_t<font color='#5555FF'>&gt;</font> <b><a name='op'></a>op</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> self_t <font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <b>{</b>                    \
+    <font color='#0000FF'>return</font> op_<font color='#5555FF'>&lt;</font>op_##id, op_u, self_t, undefined_t<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;                                  \
+<b>}</b>
+
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>sub,       rsub,         <b><a name='operator'></a>operator</b><font color='#5555FF'>-</font>,    l <font color='#5555FF'>-</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>add,       radd,         <b><a name='operator'></a>operator</b><font color='#5555FF'>+</font>,    l <font color='#5555FF'>+</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>mul,       rmul,         <b><a name='operator'></a>operator</b><font color='#5555FF'>*</font>,    l <font color='#5555FF'>*</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>truediv,   rtruediv,     <b><a name='operator'></a>operator</b><font color='#5555FF'>/</font>,    l <font color='#5555FF'>/</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>mod,       rmod,         <b><a name='operator'></a>operator</b><font color='#5555FF'>%</font>,    l <font color='#5555FF'>%</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>lshift,    rlshift,      <b><a name='operator'></a>operator</b><font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font>,   l <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>rshift,    rrshift,      <b><a name='operator'></a>operator</b><font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>,   l <font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>and,       rand,         <b><a name='operator'></a>operator</b><font color='#5555FF'>&amp;</font>,    l <font color='#5555FF'>&amp;</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>xor,       rxor,         <b><a name='operator'></a>operator</b>^,    l ^ r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>eq,        eq,           <b><a name='operator'></a>operator</b><font color='#5555FF'>=</font><font color='#5555FF'>=</font>,   l <font color='#5555FF'>=</font><font color='#5555FF'>=</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>ne,        ne,           <b><a name='operator'></a>operator</b><font color='#5555FF'>!</font><font color='#5555FF'>=</font>,   l <font color='#5555FF'>!</font><font color='#5555FF'>=</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>or,        ror,          <b><a name='operator'></a>operator</b><font color='#5555FF'>|</font>,    l <font color='#5555FF'>|</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>gt,        lt,           <b><a name='operator'></a>operator</b><font color='#5555FF'>&gt;</font>,    l <font color='#5555FF'>&gt;</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>ge,        le,           <b><a name='operator'></a>operator</b><font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font>,   l <font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>lt,        gt,           <b><a name='operator'></a>operator</b><font color='#5555FF'>&lt;</font>,    l <font color='#5555FF'>&lt;</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_BINARY_OPERATOR'></a>PYBIND11_BINARY_OPERATOR</b><font face='Lucida Console'>(</font>le,        ge,           <b><a name='operator'></a>operator</b><font color='#5555FF'>&lt;</font><font color='#5555FF'>=</font>,   l <font color='#5555FF'>&lt;</font><font color='#5555FF'>=</font> r<font face='Lucida Console'>)</font>
+<font color='#009900'>//PYBIND11_BINARY_OPERATOR(pow,       rpow,         pow,          std::pow(l,  r))
+</font><b><a name='PYBIND11_INPLACE_OPERATOR'></a>PYBIND11_INPLACE_OPERATOR</b><font face='Lucida Console'>(</font>iadd,     <b><a name='operator'></a>operator</b><font color='#5555FF'>+</font><font color='#5555FF'>=</font>,   l <font color='#5555FF'>+</font><font color='#5555FF'>=</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_INPLACE_OPERATOR'></a>PYBIND11_INPLACE_OPERATOR</b><font face='Lucida Console'>(</font>isub,     <b><a name='operator'></a>operator</b><font color='#5555FF'>-</font><font color='#5555FF'>=</font>,   l <font color='#5555FF'>-</font><font color='#5555FF'>=</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_INPLACE_OPERATOR'></a>PYBIND11_INPLACE_OPERATOR</b><font face='Lucida Console'>(</font>imul,     <b><a name='operator'></a>operator</b><font color='#5555FF'>*</font><font color='#5555FF'>=</font>,   l <font color='#5555FF'>*</font><font color='#5555FF'>=</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_INPLACE_OPERATOR'></a>PYBIND11_INPLACE_OPERATOR</b><font face='Lucida Console'>(</font>itruediv, <b><a name='operator'></a>operator</b><font color='#5555FF'>/</font><font color='#5555FF'>=</font>,   l <font color='#5555FF'>/</font><font color='#5555FF'>=</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_INPLACE_OPERATOR'></a>PYBIND11_INPLACE_OPERATOR</b><font face='Lucida Console'>(</font>imod,     <b><a name='operator'></a>operator</b><font color='#5555FF'>%</font><font color='#5555FF'>=</font>,   l <font color='#5555FF'>%</font><font color='#5555FF'>=</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_INPLACE_OPERATOR'></a>PYBIND11_INPLACE_OPERATOR</b><font face='Lucida Console'>(</font>ilshift,  <b><a name='operator'></a>operator</b><font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font><font color='#5555FF'>=</font>,  l <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font><font color='#5555FF'>=</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_INPLACE_OPERATOR'></a>PYBIND11_INPLACE_OPERATOR</b><font face='Lucida Console'>(</font>irshift,  <b><a name='operator'></a>operator</b><font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font>,  l <font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_INPLACE_OPERATOR'></a>PYBIND11_INPLACE_OPERATOR</b><font face='Lucida Console'>(</font>iand,     <b><a name='operator'></a>operator</b><font color='#5555FF'>&amp;</font><font color='#5555FF'>=</font>,   l <font color='#5555FF'>&amp;</font><font color='#5555FF'>=</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_INPLACE_OPERATOR'></a>PYBIND11_INPLACE_OPERATOR</b><font face='Lucida Console'>(</font>ixor,     <b><a name='operator'></a>operator</b>^<font color='#5555FF'>=</font>,   l ^<font color='#5555FF'>=</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_INPLACE_OPERATOR'></a>PYBIND11_INPLACE_OPERATOR</b><font face='Lucida Console'>(</font>ior,      <b><a name='operator'></a>operator</b><font color='#5555FF'>|</font><font color='#5555FF'>=</font>,   l <font color='#5555FF'>|</font><font color='#5555FF'>=</font> r<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_UNARY_OPERATOR'></a>PYBIND11_UNARY_OPERATOR</b><font face='Lucida Console'>(</font>neg,        <b><a name='operator'></a>operator</b><font color='#5555FF'>-</font>,    <font color='#5555FF'>-</font>l<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_UNARY_OPERATOR'></a>PYBIND11_UNARY_OPERATOR</b><font face='Lucida Console'>(</font>pos,        <b><a name='operator'></a>operator</b><font color='#5555FF'>+</font>,    <font color='#5555FF'>+</font>l<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_UNARY_OPERATOR'></a>PYBIND11_UNARY_OPERATOR</b><font face='Lucida Console'>(</font>abs,        abs,          std::<font color='#BB00BB'>abs</font><font face='Lucida Console'>(</font>l<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_UNARY_OPERATOR'></a>PYBIND11_UNARY_OPERATOR</b><font face='Lucida Console'>(</font>hash,       hash,         std::hash<font color='#5555FF'>&lt;</font>L<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>(</font>l<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_UNARY_OPERATOR'></a>PYBIND11_UNARY_OPERATOR</b><font face='Lucida Console'>(</font>invert,     <b><a name='operator'></a>operator</b>~,    <font face='Lucida Console'>(</font>~l<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_UNARY_OPERATOR'></a>PYBIND11_UNARY_OPERATOR</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>bool</u></font>,       <b><a name='operator'></a>operator</b><font color='#5555FF'>!</font>,    <font color='#5555FF'>!</font><font color='#5555FF'>!</font>l<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_UNARY_OPERATOR'></a>PYBIND11_UNARY_OPERATOR</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>int</u></font>,        int_,         <font face='Lucida Console'>(</font><font color='#0000FF'><u>int</u></font><font face='Lucida Console'>)</font> l<font face='Lucida Console'>)</font>
+<b><a name='PYBIND11_UNARY_OPERATOR'></a>PYBIND11_UNARY_OPERATOR</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>float</u></font>,      float_,       <font face='Lucida Console'>(</font><font color='#0000FF'><u>double</u></font><font face='Lucida Console'>)</font> l<font face='Lucida Console'>)</font>
+
+<font color='#0000FF'>#undef</font> PYBIND11_BINARY_OPERATOR
+<font color='#0000FF'>#undef</font> PYBIND11_INPLACE_OPERATOR
+<font color='#0000FF'>#undef</font> PYBIND11_UNARY_OPERATOR
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+
+<font color='#0000FF'>using</font> detail::self;
+
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+
+<font color='#0000FF'>#if</font> defined<font face='Lucida Console'>(</font>_MSC_VER<font face='Lucida Console'>)</font>
+#  pragma <b><a name='warning'></a>warning</b><font face='Lucida Console'>(</font>pop<font face='Lucida Console'>)</font>
+<font color='#0000FF'>#endif</font>
+
+</pre></body></html>

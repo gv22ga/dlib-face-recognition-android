@@ -1,0 +1,203 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - iostream.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>/*
+    pybind11/iostream.h -- Tools to assist with redirecting cout and cerr to Python
+
+    Copyright (c) 2017 Henry F. Schreiner
+
+    All rights reserved. Use of this source code is governed by a
+    BSD-style license that can be found in the LICENSE file.
+*/</font>
+
+<font color='#0000FF'>#pragma</font> once
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='pybind11.h.html'>pybind11.h</a>"
+
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>streambuf<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>ostream<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>string<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>memory<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>iostream<font color='#5555FF'>&gt;</font>
+
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+
+<font color='#009900'>// Buffer that writes to Python instead of C++
+</font><font color='#0000FF'>class</font> <b><a name='pythonbuf'></a>pythonbuf</b> : <font color='#0000FF'>public</font> std::streambuf <b>{</b>
+<font color='#0000FF'>private</font>:
+    <font color='#0000FF'>using</font> traits_type <font color='#5555FF'>=</font> std::streambuf::traits_type;
+
+    <font color='#0000FF'><u>char</u></font> d_buffer[<font color='#979000'>1024</font>];
+    object pywrite;
+    object pyflush;
+
+    <font color='#0000FF'><u>int</u></font> <b><a name='overflow'></a>overflow</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>int</u></font> c<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>traits_type::<font color='#BB00BB'>eq_int_type</font><font face='Lucida Console'>(</font>c, traits_type::<font color='#BB00BB'>eof</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+            <font color='#5555FF'>*</font><font color='#BB00BB'>pptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> traits_type::<font color='#BB00BB'>to_char_type</font><font face='Lucida Console'>(</font>c<font face='Lucida Console'>)</font>;
+            <font color='#BB00BB'>pbump</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>;
+        <b>}</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>sync</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> ? traits_type::<font color='#BB00BB'>not_eof</font><font face='Lucida Console'>(</font>c<font face='Lucida Console'>)</font> : traits_type::<font color='#BB00BB'>eof</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'><u>int</u></font> <b><a name='sync'></a>sync</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#BB00BB'>pbase</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>!</font><font color='#5555FF'>=</font> <font color='#BB00BB'>pptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+            <font color='#009900'>// This subtraction cannot be negative, so dropping the sign
+</font>            str <font color='#BB00BB'>line</font><font face='Lucida Console'>(</font><font color='#BB00BB'>pbase</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, <font color='#0000FF'>static_cast</font><font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font color='#BB00BB'>pptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>-</font> <font color='#BB00BB'>pbase</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+            <font color='#BB00BB'>pywrite</font><font face='Lucida Console'>(</font>line<font face='Lucida Console'>)</font>;
+            <font color='#BB00BB'>pyflush</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+
+            <font color='#BB00BB'>setp</font><font face='Lucida Console'>(</font><font color='#BB00BB'>pbase</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>epptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <b>}</b>
+        <font color='#0000FF'>return</font> <font color='#979000'>0</font>;
+    <b>}</b>
+
+<font color='#0000FF'>public</font>:
+    <b><a name='pythonbuf'></a>pythonbuf</b><font face='Lucida Console'>(</font>object pyostream<font face='Lucida Console'>)</font>
+        : pywrite<font face='Lucida Console'>(</font>pyostream.attr<font face='Lucida Console'>(</font>"<font color='#CC0000'>write</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>,
+          pyflush<font face='Lucida Console'>(</font>pyostream.attr<font face='Lucida Console'>(</font>"<font color='#CC0000'>flush</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#BB00BB'>setp</font><font face='Lucida Console'>(</font>d_buffer, d_buffer <font color='#5555FF'>+</font> <font color='#0000FF'>sizeof</font><font face='Lucida Console'>(</font>d_buffer<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font> <font color='#979000'>1</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#009900'>/// Sync before destroy
+</font>    ~<b><a name='pythonbuf'></a>pythonbuf</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#BB00BB'>sync</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+<b>}</b>;
+
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+
+
+<font color='#009900'>/** \rst
+    This a move-only guard that redirects output.
+
+    .. code-block:: cpp
+
+        #include &lt;pybind11/iostream.h&gt;
+
+        ...
+
+        {
+            py::scoped_ostream_redirect output;
+            std::cout &lt;&lt; "Hello, World!"; // Python stdout
+        } // &lt;-- return std::cout to normal
+
+    You can explicitly pass the c++ stream and the python object,
+    for example to guard stderr instead.
+
+    .. code-block:: cpp
+
+        {
+            py::scoped_ostream_redirect output{std::cerr, py::module::import("sys").attr("stderr")};
+            std::cerr &lt;&lt; "Hello, World!";
+        }
+ \endrst */</font>
+<font color='#0000FF'>class</font> <b><a name='scoped_ostream_redirect'></a>scoped_ostream_redirect</b> <b>{</b>
+<font color='#0000FF'>protected</font>:
+    std::streambuf <font color='#5555FF'>*</font>old;
+    std::ostream <font color='#5555FF'>&amp;</font>costream;
+    detail::pythonbuf buffer;
+
+<font color='#0000FF'>public</font>:
+    <b><a name='scoped_ostream_redirect'></a>scoped_ostream_redirect</b><font face='Lucida Console'>(</font>
+            std::ostream <font color='#5555FF'>&amp;</font>costream <font color='#5555FF'>=</font> std::cout,
+            object pyostream <font color='#5555FF'>=</font> module::<font color='#BB00BB'>import</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>sys</font>"<font face='Lucida Console'>)</font>.<font color='#BB00BB'>attr</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>stdout</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+        : costream<font face='Lucida Console'>(</font>costream<font face='Lucida Console'>)</font>, buffer<font face='Lucida Console'>(</font>pyostream<font face='Lucida Console'>)</font> <b>{</b>
+        old <font color='#5555FF'>=</font> costream.<font color='#BB00BB'>rdbuf</font><font face='Lucida Console'>(</font><font color='#5555FF'>&amp;</font>buffer<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    ~<b><a name='scoped_ostream_redirect'></a>scoped_ostream_redirect</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b>
+        costream.<font color='#BB00BB'>rdbuf</font><font face='Lucida Console'>(</font>old<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <b><a name='scoped_ostream_redirect'></a>scoped_ostream_redirect</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> scoped_ostream_redirect <font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+    <b><a name='scoped_ostream_redirect'></a>scoped_ostream_redirect</b><font face='Lucida Console'>(</font>scoped_ostream_redirect <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>other<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>default</font>;
+    scoped_ostream_redirect <font color='#5555FF'>&amp;</font><b><a name='operator'></a>operator</b><font color='#5555FF'>=</font><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> scoped_ostream_redirect <font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+    scoped_ostream_redirect <font color='#5555FF'>&amp;</font><b><a name='operator'></a>operator</b><font color='#5555FF'>=</font><font face='Lucida Console'>(</font>scoped_ostream_redirect <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+<b>}</b>;
+
+
+<font color='#009900'>/** \rst
+    Like `scoped_ostream_redirect`, but redirects cerr by default. This class
+    is provided primary to make ``py::call_guard`` easier to make.
+
+    .. code-block:: cpp
+
+     m.def("noisy_func", &amp;noisy_func,
+           py::call_guard&lt;scoped_ostream_redirect,
+                          scoped_estream_redirect&gt;());
+
+\endrst */</font>
+<font color='#0000FF'>class</font> <b><a name='scoped_estream_redirect'></a>scoped_estream_redirect</b> : <font color='#0000FF'>public</font> scoped_ostream_redirect <b>{</b>
+<font color='#0000FF'>public</font>:
+    <b><a name='scoped_estream_redirect'></a>scoped_estream_redirect</b><font face='Lucida Console'>(</font>
+            std::ostream <font color='#5555FF'>&amp;</font>costream <font color='#5555FF'>=</font> std::cerr,
+            object pyostream <font color='#5555FF'>=</font> module::<font color='#BB00BB'>import</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>sys</font>"<font face='Lucida Console'>)</font>.<font color='#BB00BB'>attr</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>stderr</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+        : scoped_ostream_redirect<font face='Lucida Console'>(</font>costream,pyostream<font face='Lucida Console'>)</font> <b>{</b><b>}</b>
+<b>}</b>;
+
+
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+
+<font color='#009900'>// Class to redirect output as a context manager. C++ backend.
+</font><font color='#0000FF'>class</font> <b><a name='OstreamRedirect'></a>OstreamRedirect</b> <b>{</b>
+    <font color='#0000FF'><u>bool</u></font> do_stdout_;
+    <font color='#0000FF'><u>bool</u></font> do_stderr_;
+    std::unique_ptr<font color='#5555FF'>&lt;</font>scoped_ostream_redirect<font color='#5555FF'>&gt;</font> redirect_stdout;
+    std::unique_ptr<font color='#5555FF'>&lt;</font>scoped_estream_redirect<font color='#5555FF'>&gt;</font> redirect_stderr;
+
+<font color='#0000FF'>public</font>:
+    <b><a name='OstreamRedirect'></a>OstreamRedirect</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>bool</u></font> do_stdout <font color='#5555FF'>=</font> <font color='#979000'>true</font>, <font color='#0000FF'><u>bool</u></font> do_stderr <font color='#5555FF'>=</font> <font color='#979000'>true</font><font face='Lucida Console'>)</font>
+        : do_stdout_<font face='Lucida Console'>(</font>do_stdout<font face='Lucida Console'>)</font>, do_stderr_<font face='Lucida Console'>(</font>do_stderr<font face='Lucida Console'>)</font> <b>{</b><b>}</b>
+
+    <font color='#0000FF'><u>void</u></font> <b><a name='enter'></a>enter</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>do_stdout_<font face='Lucida Console'>)</font>
+            redirect_stdout.<font color='#BB00BB'>reset</font><font face='Lucida Console'>(</font><font color='#0000FF'>new</font> <font color='#BB00BB'>scoped_ostream_redirect</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>do_stderr_<font face='Lucida Console'>)</font>
+            redirect_stderr.<font color='#BB00BB'>reset</font><font face='Lucida Console'>(</font><font color='#0000FF'>new</font> <font color='#BB00BB'>scoped_estream_redirect</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'><u>void</u></font> <b><a name='exit'></a>exit</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b>
+        redirect_stdout.<font color='#BB00BB'>reset</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+        redirect_stderr.<font color='#BB00BB'>reset</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+<b>}</b>;
+
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+
+<font color='#009900'>/** \rst
+    This is a helper function to add a C++ redirect context manager to Python
+    instead of using a C++ guard. To use it, add the following to your binding code:
+
+    .. code-block:: cpp
+
+        #include &lt;pybind11/iostream.h&gt;
+
+        ...
+
+        py::add_ostream_redirect(m, "ostream_redirect");
+
+    You now have a Python context manager that redirects your output:
+
+    .. code-block:: python
+
+        with m.ostream_redirect():
+            m.print_to_cout_function()
+
+    This manager can optionally be told which streams to operate on:
+
+    .. code-block:: python
+
+        with m.ostream_redirect(stdout=true, stderr=true):
+            m.noisy_function_with_error_printing()
+
+ \endrst */</font>
+<font color='#0000FF'>inline</font> class_<font color='#5555FF'>&lt;</font>detail::OstreamRedirect<font color='#5555FF'>&gt;</font> <b><a name='add_ostream_redirect'></a>add_ostream_redirect</b><font face='Lucida Console'>(</font>module m, std::string name <font color='#5555FF'>=</font> "<font color='#CC0000'>ostream_redirect</font>"<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>return</font> class_<font color='#5555FF'>&lt;</font>detail::OstreamRedirect<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>m, name.<font color='#BB00BB'>c_str</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>module_local</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+        .<font color='#BB00BB'>def</font><font face='Lucida Console'>(</font>init<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font>,<font color='#0000FF'><u>bool</u></font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>arg</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>stdout</font>"<font face='Lucida Console'>)</font><font color='#5555FF'>=</font><font color='#979000'>true</font>, <font color='#BB00BB'>arg</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>stderr</font>"<font face='Lucida Console'>)</font><font color='#5555FF'>=</font><font color='#979000'>true</font><font face='Lucida Console'>)</font>
+        .<font color='#BB00BB'>def</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>__enter__</font>", <font color='#5555FF'>&amp;</font>detail::OstreamRedirect::enter<font face='Lucida Console'>)</font>
+        .<font color='#BB00BB'>def</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>__exit__</font>", []<font face='Lucida Console'>(</font>detail::OstreamRedirect <font color='#5555FF'>&amp;</font>self, args<font face='Lucida Console'>)</font> <b>{</b> self.<font color='#BB00BB'>exit</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <b>}</b><font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+
+</pre></body></html>

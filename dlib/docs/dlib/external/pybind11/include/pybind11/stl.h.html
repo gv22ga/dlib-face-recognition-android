@@ -1,0 +1,372 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - stl.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>/*
+    pybind11/stl.h: Transparent conversion for STL data types
+
+    Copyright (c) 2016 Wenzel Jakob &lt;wenzel.jakob@epfl.ch&gt;
+
+    All rights reserved. Use of this source code is governed by a
+    BSD-style license that can be found in the LICENSE file.
+*/</font>
+
+<font color='#0000FF'>#pragma</font> once
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='pybind11.h.html'>pybind11.h</a>"
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>set<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>unordered_set<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>map<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>unordered_map<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>iostream<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>list<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>valarray<font color='#5555FF'>&gt;</font>
+
+<font color='#0000FF'>#if</font> defined<font face='Lucida Console'>(</font>_MSC_VER<font face='Lucida Console'>)</font>
+<font color='#0000FF'>#pragma</font> warning<font face='Lucida Console'>(</font>push<font face='Lucida Console'>)</font>
+<font color='#0000FF'>#pragma</font> warning<font face='Lucida Console'>(</font>disable: <font color='#979000'>4127</font><font face='Lucida Console'>)</font> <font color='#009900'>// warning C4127: Conditional expression is constant
+</font><font color='#0000FF'>#endif</font>
+
+<font color='#0000FF'>#ifdef</font> __has_include
+<font color='#009900'>// std::optional (but including it in c++14 mode isn't allowed)
+</font>#  <font color='#0000FF'>if</font> <b><a name='defined'></a>defined</b><font face='Lucida Console'>(</font>PYBIND11_CPP17<font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <b><a name='__has_include'></a>__has_include</b><font face='Lucida Console'>(</font><font color='#5555FF'>&lt;</font>optional<font color='#5555FF'>&gt;</font><font face='Lucida Console'>)</font>
+#    include <font color='#5555FF'>&lt;</font>optional<font color='#5555FF'>&gt;</font>
+#    define PYBIND11_HAS_OPTIONAL <font color='#979000'>1</font>
+#  endif
+<font color='#009900'>// std::experimental::optional (but not allowed in c++11 mode)
+</font>#  <font color='#0000FF'>if</font> <b><a name='defined'></a>defined</b><font face='Lucida Console'>(</font>PYBIND11_CPP14<font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <b><a name='__has_include'></a>__has_include</b><font face='Lucida Console'>(</font><font color='#5555FF'>&lt;</font>experimental<font color='#5555FF'>/</font>optional<font color='#5555FF'>&gt;</font><font face='Lucida Console'>)</font>
+#    include <font color='#5555FF'>&lt;</font>experimental<font color='#5555FF'>/</font>optional<font color='#5555FF'>&gt;</font>
+#    define PYBIND11_HAS_EXP_OPTIONAL <font color='#979000'>1</font>
+#  endif
+<font color='#009900'>// std::variant
+</font>#  <font color='#0000FF'>if</font> <b><a name='defined'></a>defined</b><font face='Lucida Console'>(</font>PYBIND11_CPP17<font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <b><a name='__has_include'></a>__has_include</b><font face='Lucida Console'>(</font><font color='#5555FF'>&lt;</font>variant<font color='#5555FF'>&gt;</font><font face='Lucida Console'>)</font>
+#    include <font color='#5555FF'>&lt;</font>variant<font color='#5555FF'>&gt;</font>
+#    define PYBIND11_HAS_VARIANT <font color='#979000'>1</font>
+#  endif
+<font color='#0000FF'>#elif</font> defined<font face='Lucida Console'>(</font>_MSC_VER<font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> defined<font face='Lucida Console'>(</font>PYBIND11_CPP17<font face='Lucida Console'>)</font>
+#  include <font color='#5555FF'>&lt;</font>optional<font color='#5555FF'>&gt;</font>
+#  include <font color='#5555FF'>&lt;</font>variant<font color='#5555FF'>&gt;</font>
+#  define PYBIND11_HAS_OPTIONAL <font color='#979000'>1</font>
+#  define PYBIND11_HAS_VARIANT <font color='#979000'>1</font>
+<font color='#0000FF'>#endif</font>
+
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+
+<font color='#009900'>/// Extracts an const lvalue reference or rvalue reference for U based on the type of T (e.g. for
+</font><font color='#009900'>/// forwarding a container element).  Typically used indirect via forwarded_type(), below.
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T, <font color='#0000FF'>typename</font> U<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>using</font> forwarded_type <font color='#5555FF'>=</font> conditional_t<font color='#5555FF'>&lt;</font>
+    std::is_lvalue_reference<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font>::value, remove_reference_t<font color='#5555FF'>&lt;</font>U<font color='#5555FF'>&gt;</font> <font color='#5555FF'>&amp;</font>, remove_reference_t<font color='#5555FF'>&lt;</font>U<font color='#5555FF'>&gt;</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font><font color='#5555FF'>&gt;</font>;
+
+<font color='#009900'>/// Forwards a value U as rvalue or lvalue according to whether T is rvalue or lvalue; typically
+</font><font color='#009900'>/// used for forwarding a container's elements.
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T, <font color='#0000FF'>typename</font> U<font color='#5555FF'>&gt;</font>
+forwarded_type<font color='#5555FF'>&lt;</font>T, U<font color='#5555FF'>&gt;</font> <b><a name='forward_like'></a>forward_like</b><font face='Lucida Console'>(</font>U <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>u<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>return</font> std::forward<font color='#5555FF'>&lt;</font>detail::forwarded_type<font color='#5555FF'>&lt;</font>T, U<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>std::forward<font color='#5555FF'>&lt;</font>U<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>u<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Type, <font color='#0000FF'>typename</font> Key<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='set_caster'></a>set_caster</b> <b>{</b>
+    <font color='#0000FF'>using</font> type <font color='#5555FF'>=</font> Type;
+    <font color='#0000FF'>using</font> key_conv <font color='#5555FF'>=</font> make_caster<font color='#5555FF'>&lt;</font>Key<font color='#5555FF'>&gt;</font>;
+
+    <font color='#0000FF'><u>bool</u></font> <b><a name='load'></a>load</b><font face='Lucida Console'>(</font>handle src, <font color='#0000FF'><u>bool</u></font> convert<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>isinstance<font color='#5555FF'>&lt;</font>pybind11::set<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>src<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+        <font color='#0000FF'>auto</font> s <font color='#5555FF'>=</font> reinterpret_borrow<font color='#5555FF'>&lt;</font>pybind11::set<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>src<font face='Lucida Console'>)</font>;
+        value.<font color='#BB00BB'>clear</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font> entry : s<font face='Lucida Console'>)</font> <b>{</b>
+            key_conv conv;
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>conv.<font color='#BB00BB'>load</font><font face='Lucida Console'>(</font>entry, convert<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+                <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+            value.<font color='#BB00BB'>insert</font><font face='Lucida Console'>(</font>cast_op<font color='#5555FF'>&lt;</font>Key <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>conv<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <b>}</b>
+        <font color='#0000FF'>return</font> <font color='#979000'>true</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>static</font> handle <b><a name='cast'></a>cast</b><font face='Lucida Console'>(</font>T <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>src, return_value_policy policy, handle parent<font face='Lucida Console'>)</font> <b>{</b>
+        pybind11::set s;
+        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>value : src<font face='Lucida Console'>)</font> <b>{</b>
+            <font color='#0000FF'>auto</font> value_ <font color='#5555FF'>=</font> reinterpret_steal<font color='#5555FF'>&lt;</font>object<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>key_conv::<font color='#BB00BB'>cast</font><font face='Lucida Console'>(</font>forward_like<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>value<font face='Lucida Console'>)</font>, policy, parent<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>value_ <font color='#5555FF'>|</font><font color='#5555FF'>|</font> <font color='#5555FF'>!</font>s.<font color='#BB00BB'>add</font><font face='Lucida Console'>(</font>value_<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+                <font color='#0000FF'>return</font> <font color='#BB00BB'>handle</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+        <b>}</b>
+        <font color='#0000FF'>return</font> s.<font color='#BB00BB'>release</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <b><a name='PYBIND11_TYPE_CASTER'></a>PYBIND11_TYPE_CASTER</b><font face='Lucida Console'>(</font>type, <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>Set[</font>"<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> key_conv::name <font color='#5555FF'>+</font> <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>]</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+<b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Type, <font color='#0000FF'>typename</font> Key, <font color='#0000FF'>typename</font> Value<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='map_caster'></a>map_caster</b> <b>{</b>
+    <font color='#0000FF'>using</font> key_conv   <font color='#5555FF'>=</font> make_caster<font color='#5555FF'>&lt;</font>Key<font color='#5555FF'>&gt;</font>;
+    <font color='#0000FF'>using</font> value_conv <font color='#5555FF'>=</font> make_caster<font color='#5555FF'>&lt;</font>Value<font color='#5555FF'>&gt;</font>;
+
+    <font color='#0000FF'><u>bool</u></font> <b><a name='load'></a>load</b><font face='Lucida Console'>(</font>handle src, <font color='#0000FF'><u>bool</u></font> convert<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>isinstance<font color='#5555FF'>&lt;</font>dict<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>src<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+        <font color='#0000FF'>auto</font> d <font color='#5555FF'>=</font> reinterpret_borrow<font color='#5555FF'>&lt;</font>dict<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>src<font face='Lucida Console'>)</font>;
+        value.<font color='#BB00BB'>clear</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font> it : d<font face='Lucida Console'>)</font> <b>{</b>
+            key_conv kconv;
+            value_conv vconv;
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>kconv.<font color='#BB00BB'>load</font><font face='Lucida Console'>(</font>it.first.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, convert<font face='Lucida Console'>)</font> <font color='#5555FF'>|</font><font color='#5555FF'>|</font>
+                <font color='#5555FF'>!</font>vconv.<font color='#BB00BB'>load</font><font face='Lucida Console'>(</font>it.second.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, convert<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+                <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+            value.<font color='#BB00BB'>emplace</font><font face='Lucida Console'>(</font>cast_op<font color='#5555FF'>&lt;</font>Key <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>kconv<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>, cast_op<font color='#5555FF'>&lt;</font>Value <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>vconv<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <b>}</b>
+        <font color='#0000FF'>return</font> <font color='#979000'>true</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>static</font> handle <b><a name='cast'></a>cast</b><font face='Lucida Console'>(</font>T <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>src, return_value_policy policy, handle parent<font face='Lucida Console'>)</font> <b>{</b>
+        dict d;
+        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>kv : src<font face='Lucida Console'>)</font> <b>{</b>
+            <font color='#0000FF'>auto</font> key <font color='#5555FF'>=</font> reinterpret_steal<font color='#5555FF'>&lt;</font>object<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>key_conv::<font color='#BB00BB'>cast</font><font face='Lucida Console'>(</font>forward_like<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>kv.first<font face='Lucida Console'>)</font>, policy, parent<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>auto</font> value <font color='#5555FF'>=</font> reinterpret_steal<font color='#5555FF'>&lt;</font>object<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>value_conv::<font color='#BB00BB'>cast</font><font face='Lucida Console'>(</font>forward_like<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>kv.second<font face='Lucida Console'>)</font>, policy, parent<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>key <font color='#5555FF'>|</font><font color='#5555FF'>|</font> <font color='#5555FF'>!</font>value<font face='Lucida Console'>)</font>
+                <font color='#0000FF'>return</font> <font color='#BB00BB'>handle</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+            d[key] <font color='#5555FF'>=</font> value;
+        <b>}</b>
+        <font color='#0000FF'>return</font> d.<font color='#BB00BB'>release</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <b><a name='PYBIND11_TYPE_CASTER'></a>PYBIND11_TYPE_CASTER</b><font face='Lucida Console'>(</font>Type, <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>Dict[</font>"<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> key_conv::name <font color='#5555FF'>+</font> <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>, </font>"<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> value_conv::name <font color='#5555FF'>+</font> <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>]</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+<b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Type, <font color='#0000FF'>typename</font> Value<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='list_caster'></a>list_caster</b> <b>{</b>
+    <font color='#0000FF'>using</font> value_conv <font color='#5555FF'>=</font> make_caster<font color='#5555FF'>&lt;</font>Value<font color='#5555FF'>&gt;</font>;
+
+    <font color='#0000FF'><u>bool</u></font> <b><a name='load'></a>load</b><font face='Lucida Console'>(</font>handle src, <font color='#0000FF'><u>bool</u></font> convert<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>isinstance<font color='#5555FF'>&lt;</font>sequence<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>src<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+        <font color='#0000FF'>auto</font> s <font color='#5555FF'>=</font> reinterpret_borrow<font color='#5555FF'>&lt;</font>sequence<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>src<font face='Lucida Console'>)</font>;
+        value.<font color='#BB00BB'>clear</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+        <font color='#BB00BB'>reserve_maybe</font><font face='Lucida Console'>(</font>s, <font color='#5555FF'>&amp;</font>value<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font> it : s<font face='Lucida Console'>)</font> <b>{</b>
+            value_conv conv;
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>conv.<font color='#BB00BB'>load</font><font face='Lucida Console'>(</font>it, convert<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+                <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+            value.<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font>cast_op<font color='#5555FF'>&lt;</font>Value <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>conv<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <b>}</b>
+        <font color='#0000FF'>return</font> <font color='#979000'>true</font>;
+    <b>}</b>
+
+<font color='#0000FF'>private</font>:
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T <font color='#5555FF'>=</font> Type,
+              enable_if_t<font color='#5555FF'>&lt;</font>std::is_same<font color='#5555FF'>&lt;</font><b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font>std::declval<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>reserve</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>, <font color='#0000FF'><u>void</u></font><font color='#5555FF'>&gt;</font>::value, <font color='#0000FF'><u>int</u></font><font color='#5555FF'>&gt;</font> <font color='#5555FF'>=</font> <font color='#979000'>0</font><font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'><u>void</u></font> <b><a name='reserve_maybe'></a>reserve_maybe</b><font face='Lucida Console'>(</font>sequence s, Type <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> <b>{</b> value.<font color='#BB00BB'>reserve</font><font face='Lucida Console'>(</font>s.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <b>}</b>
+    <font color='#0000FF'><u>void</u></font> <b><a name='reserve_maybe'></a>reserve_maybe</b><font face='Lucida Console'>(</font>sequence, <font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+
+<font color='#0000FF'>public</font>:
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>static</font> handle <b><a name='cast'></a>cast</b><font face='Lucida Console'>(</font>T <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>src, return_value_policy policy, handle parent<font face='Lucida Console'>)</font> <b>{</b>
+        list <font color='#BB00BB'>l</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <font color='#0000FF'><u>size_t</u></font> index <font color='#5555FF'>=</font> <font color='#979000'>0</font>;
+        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>value : src<font face='Lucida Console'>)</font> <b>{</b>
+            <font color='#0000FF'>auto</font> value_ <font color='#5555FF'>=</font> reinterpret_steal<font color='#5555FF'>&lt;</font>object<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>value_conv::<font color='#BB00BB'>cast</font><font face='Lucida Console'>(</font>forward_like<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>value<font face='Lucida Console'>)</font>, policy, parent<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>value_<font face='Lucida Console'>)</font>
+                <font color='#0000FF'>return</font> <font color='#BB00BB'>handle</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+            <font color='#BB00BB'>PyList_SET_ITEM</font><font face='Lucida Console'>(</font>l.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, <font face='Lucida Console'>(</font>ssize_t<font face='Lucida Console'>)</font> index<font color='#5555FF'>+</font><font color='#5555FF'>+</font>, value_.<font color='#BB00BB'>release</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <font color='#009900'>// steals a reference
+</font>        <b>}</b>
+        <font color='#0000FF'>return</font> l.<font color='#BB00BB'>release</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <b><a name='PYBIND11_TYPE_CASTER'></a>PYBIND11_TYPE_CASTER</b><font face='Lucida Console'>(</font>Type, <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>List[</font>"<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> value_conv::name <font color='#5555FF'>+</font> <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>]</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+<b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Type, <font color='#0000FF'>typename</font> Alloc<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::vector<font color='#5555FF'>&lt;</font>Type, Alloc<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>
+ : list_caster<font color='#5555FF'>&lt;</font>std::vector<font color='#5555FF'>&lt;</font>Type, Alloc<font color='#5555FF'>&gt;</font>, Type<font color='#5555FF'>&gt;</font> <b>{</b> <b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Type, <font color='#0000FF'>typename</font> Alloc<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::list<font color='#5555FF'>&lt;</font>Type, Alloc<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>
+ : list_caster<font color='#5555FF'>&lt;</font>std::list<font color='#5555FF'>&lt;</font>Type, Alloc<font color='#5555FF'>&gt;</font>, Type<font color='#5555FF'>&gt;</font> <b>{</b> <b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> ArrayType, <font color='#0000FF'>typename</font> Value, <font color='#0000FF'><u>bool</u></font> Resizable, <font color='#0000FF'><u>size_t</u></font> Size <font color='#5555FF'>=</font> <font color='#979000'>0</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='array_caster'></a>array_caster</b> <b>{</b>
+    <font color='#0000FF'>using</font> value_conv <font color='#5555FF'>=</font> make_caster<font color='#5555FF'>&lt;</font>Value<font color='#5555FF'>&gt;</font>;
+
+<font color='#0000FF'>private</font>:
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font> R <font color='#5555FF'>=</font> Resizable<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'><u>bool</u></font> <b><a name='require_size'></a>require_size</b><font face='Lucida Console'>(</font>enable_if_t<font color='#5555FF'>&lt;</font>R, <font color='#0000FF'><u>size_t</u></font><font color='#5555FF'>&gt;</font> size<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>value.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>!</font><font color='#5555FF'>=</font> size<font face='Lucida Console'>)</font>
+            value.<font color='#BB00BB'>resize</font><font face='Lucida Console'>(</font>size<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> <font color='#979000'>true</font>;
+    <b>}</b>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font> R <font color='#5555FF'>=</font> Resizable<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'><u>bool</u></font> <b><a name='require_size'></a>require_size</b><font face='Lucida Console'>(</font>enable_if_t<font color='#5555FF'>&lt;</font><font color='#5555FF'>!</font>R, <font color='#0000FF'><u>size_t</u></font><font color='#5555FF'>&gt;</font> size<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>return</font> size <font color='#5555FF'>=</font><font color='#5555FF'>=</font> Size;
+    <b>}</b>
+
+<font color='#0000FF'>public</font>:
+    <font color='#0000FF'><u>bool</u></font> <b><a name='load'></a>load</b><font face='Lucida Console'>(</font>handle src, <font color='#0000FF'><u>bool</u></font> convert<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>isinstance<font color='#5555FF'>&lt;</font>list<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>src<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+        <font color='#0000FF'>auto</font> l <font color='#5555FF'>=</font> reinterpret_borrow<font color='#5555FF'>&lt;</font>list<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>src<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font><font color='#BB00BB'>require_size</font><font face='Lucida Console'>(</font>l.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+        <font color='#0000FF'><u>size_t</u></font> ctr <font color='#5555FF'>=</font> <font color='#979000'>0</font>;
+        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font> it : l<font face='Lucida Console'>)</font> <b>{</b>
+            value_conv conv;
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>conv.<font color='#BB00BB'>load</font><font face='Lucida Console'>(</font>it, convert<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+                <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+            value[ctr<font color='#5555FF'>+</font><font color='#5555FF'>+</font>] <font color='#5555FF'>=</font> cast_op<font color='#5555FF'>&lt;</font>Value <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>conv<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <b>}</b>
+        <font color='#0000FF'>return</font> <font color='#979000'>true</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>static</font> handle <b><a name='cast'></a>cast</b><font face='Lucida Console'>(</font>T <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>src, return_value_policy policy, handle parent<font face='Lucida Console'>)</font> <b>{</b>
+        list <font color='#BB00BB'>l</font><font face='Lucida Console'>(</font>src.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <font color='#0000FF'><u>size_t</u></font> index <font color='#5555FF'>=</font> <font color='#979000'>0</font>;
+        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>value : src<font face='Lucida Console'>)</font> <b>{</b>
+            <font color='#0000FF'>auto</font> value_ <font color='#5555FF'>=</font> reinterpret_steal<font color='#5555FF'>&lt;</font>object<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>value_conv::<font color='#BB00BB'>cast</font><font face='Lucida Console'>(</font>forward_like<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>value<font face='Lucida Console'>)</font>, policy, parent<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>value_<font face='Lucida Console'>)</font>
+                <font color='#0000FF'>return</font> <font color='#BB00BB'>handle</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+            <font color='#BB00BB'>PyList_SET_ITEM</font><font face='Lucida Console'>(</font>l.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, <font face='Lucida Console'>(</font>ssize_t<font face='Lucida Console'>)</font> index<font color='#5555FF'>+</font><font color='#5555FF'>+</font>, value_.<font color='#BB00BB'>release</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <font color='#009900'>// steals a reference
+</font>        <b>}</b>
+        <font color='#0000FF'>return</font> l.<font color='#BB00BB'>release</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <b><a name='PYBIND11_TYPE_CASTER'></a>PYBIND11_TYPE_CASTER</b><font face='Lucida Console'>(</font>ArrayType, <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>List[</font>"<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> value_conv::name <font color='#5555FF'>+</font> _<font color='#5555FF'>&lt;</font>Resizable<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'></font>"<font face='Lucida Console'>)</font>, <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>[</font>"<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> _<font color='#5555FF'>&lt;</font>Size<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>]</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>]</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+<b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Type, <font color='#0000FF'><u>size_t</u></font> Size<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::array<font color='#5555FF'>&lt;</font>Type, Size<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>
+ : array_caster<font color='#5555FF'>&lt;</font>std::array<font color='#5555FF'>&lt;</font>Type, Size<font color='#5555FF'>&gt;</font>, Type, <font color='#979000'>false</font>, Size<font color='#5555FF'>&gt;</font> <b>{</b> <b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Type<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::valarray<font color='#5555FF'>&lt;</font>Type<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>
+ : array_caster<font color='#5555FF'>&lt;</font>std::valarray<font color='#5555FF'>&lt;</font>Type<font color='#5555FF'>&gt;</font>, Type, <font color='#979000'>true</font><font color='#5555FF'>&gt;</font> <b>{</b> <b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Key, <font color='#0000FF'>typename</font> Compare, <font color='#0000FF'>typename</font> Alloc<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::set<font color='#5555FF'>&lt;</font>Key, Compare, Alloc<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>
+  : set_caster<font color='#5555FF'>&lt;</font>std::set<font color='#5555FF'>&lt;</font>Key, Compare, Alloc<font color='#5555FF'>&gt;</font>, Key<font color='#5555FF'>&gt;</font> <b>{</b> <b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Key, <font color='#0000FF'>typename</font> Hash, <font color='#0000FF'>typename</font> Equal, <font color='#0000FF'>typename</font> Alloc<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::unordered_set<font color='#5555FF'>&lt;</font>Key, Hash, Equal, Alloc<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>
+  : set_caster<font color='#5555FF'>&lt;</font>std::unordered_set<font color='#5555FF'>&lt;</font>Key, Hash, Equal, Alloc<font color='#5555FF'>&gt;</font>, Key<font color='#5555FF'>&gt;</font> <b>{</b> <b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Key, <font color='#0000FF'>typename</font> Value, <font color='#0000FF'>typename</font> Compare, <font color='#0000FF'>typename</font> Alloc<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::map<font color='#5555FF'>&lt;</font>Key, Value, Compare, Alloc<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>
+  : map_caster<font color='#5555FF'>&lt;</font>std::map<font color='#5555FF'>&lt;</font>Key, Value, Compare, Alloc<font color='#5555FF'>&gt;</font>, Key, Value<font color='#5555FF'>&gt;</font> <b>{</b> <b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Key, <font color='#0000FF'>typename</font> Value, <font color='#0000FF'>typename</font> Hash, <font color='#0000FF'>typename</font> Equal, <font color='#0000FF'>typename</font> Alloc<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::unordered_map<font color='#5555FF'>&lt;</font>Key, Value, Hash, Equal, Alloc<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>
+  : map_caster<font color='#5555FF'>&lt;</font>std::unordered_map<font color='#5555FF'>&lt;</font>Key, Value, Hash, Equal, Alloc<font color='#5555FF'>&gt;</font>, Key, Value<font color='#5555FF'>&gt;</font> <b>{</b> <b>}</b>;
+
+<font color='#009900'>// This type caster is intended to be used for std::optional and std::experimental::optional
+</font><font color='#0000FF'>template</font><font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='optional_caster'></a>optional_caster</b> <b>{</b>
+    <font color='#0000FF'>using</font> value_conv <font color='#5555FF'>=</font> make_caster<font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T::value_type<font color='#5555FF'>&gt;</font>;
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T_<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>static</font> handle <b><a name='cast'></a>cast</b><font face='Lucida Console'>(</font>T_ <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>src, return_value_policy policy, handle parent<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>src<font face='Lucida Console'>)</font>
+            <font color='#0000FF'>return</font> <font color='#BB00BB'>none</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>inc_ref</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> value_conv::<font color='#BB00BB'>cast</font><font face='Lucida Console'>(</font><font color='#5555FF'>*</font>std::forward<font color='#5555FF'>&lt;</font>T_<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>src<font face='Lucida Console'>)</font>, policy, parent<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'><u>bool</u></font> <b><a name='load'></a>load</b><font face='Lucida Console'>(</font>handle src, <font color='#0000FF'><u>bool</u></font> convert<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>src<font face='Lucida Console'>)</font> <b>{</b>
+            <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+        <b>}</b> <font color='#0000FF'>else</font> <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>src.<font color='#BB00BB'>is_none</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+            <font color='#0000FF'>return</font> <font color='#979000'>true</font>;  <font color='#009900'>// default-constructed value is already empty
+</font>        <b>}</b>
+        value_conv inner_caster;
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>inner_caster.<font color='#BB00BB'>load</font><font face='Lucida Console'>(</font>src, convert<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+
+        value.<font color='#BB00BB'>emplace</font><font face='Lucida Console'>(</font>cast_op<font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T::value_type <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>inner_caster<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> <font color='#979000'>true</font>;
+    <b>}</b>
+
+    <b><a name='PYBIND11_TYPE_CASTER'></a>PYBIND11_TYPE_CASTER</b><font face='Lucida Console'>(</font>T, <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>Optional[</font>"<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> value_conv::name <font color='#5555FF'>+</font> <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>]</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+<b>}</b>;
+
+<font color='#0000FF'>#if</font> PYBIND11_HAS_OPTIONAL
+<font color='#0000FF'>template</font><font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::optional<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>
+    : <font color='#0000FF'>public</font> optional_caster<font color='#5555FF'>&lt;</font>std::optional<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> <b>{</b><b>}</b>;
+
+<font color='#0000FF'>template</font><font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::nullopt_t<font color='#5555FF'>&gt;</font>
+    : <font color='#0000FF'>public</font> void_caster<font color='#5555FF'>&lt;</font>std::nullopt_t<font color='#5555FF'>&gt;</font> <b>{</b><b>}</b>;
+<font color='#0000FF'>#endif</font>
+
+<font color='#0000FF'>#if</font> PYBIND11_HAS_EXP_OPTIONAL
+<font color='#0000FF'>template</font><font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::experimental::optional<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>
+    : <font color='#0000FF'>public</font> optional_caster<font color='#5555FF'>&lt;</font>std::experimental::optional<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> <b>{</b><b>}</b>;
+
+<font color='#0000FF'>template</font><font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::experimental::nullopt_t<font color='#5555FF'>&gt;</font>
+    : <font color='#0000FF'>public</font> void_caster<font color='#5555FF'>&lt;</font>std::experimental::nullopt_t<font color='#5555FF'>&gt;</font> <b>{</b><b>}</b>;
+<font color='#0000FF'>#endif</font>
+
+<font color='#009900'>/// Visit a variant and cast any found type to Python
+</font><font color='#0000FF'>struct</font> <b><a name='variant_caster_visitor'></a>variant_caster_visitor</b> <b>{</b>
+    return_value_policy policy;
+    handle parent;
+
+    <font color='#0000FF'>using</font> result_type <font color='#5555FF'>=</font> handle; <font color='#009900'>// required by boost::variant in C++11
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font>
+    result_type <b><a name='operator'></a>operator</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>(</font>T <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>src<font face='Lucida Console'>)</font> <font color='#0000FF'>const</font> <b>{</b>
+        <font color='#0000FF'>return</font> make_caster<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font>::<font color='#BB00BB'>cast</font><font face='Lucida Console'>(</font>std::forward<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>src<font face='Lucida Console'>)</font>, policy, parent<font face='Lucida Console'>)</font>;
+    <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Helper class which abstracts away variant's `visit` function. `std::variant` and similar
+</font><font color='#009900'>/// `namespace::variant` types which provide a `namespace::visit()` function are handled here
+</font><font color='#009900'>/// automatically using argument-dependent lookup. Users can provide specializations for other
+</font><font color='#009900'>/// variant-like classes, e.g. `boost::variant` and `boost::apply_visitor`.
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>template</font><font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font>...<font color='#5555FF'>&gt;</font> <font color='#0000FF'>class</font> <b><a name='Variant'></a>Variant</b><font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>struct</font> <b><a name='visit_helper'></a>visit_helper</b> <b>{</b>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font>... Args<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='call'></a>call</b><font face='Lucida Console'>(</font>Args <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>...args<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font><font color='#BB00BB'>visit</font><font face='Lucida Console'>(</font>std::forward<font color='#5555FF'>&lt;</font>Args<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>args<font face='Lucida Console'>)</font>...<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>visit</font><font face='Lucida Console'>(</font>std::forward<font color='#5555FF'>&lt;</font>Args<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>args<font face='Lucida Console'>)</font>...<font face='Lucida Console'>)</font>;
+    <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Generic variant caster
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Variant<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> variant_caster;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>template</font><font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font>...<font color='#5555FF'>&gt;</font> <font color='#0000FF'>class</font> <b><a name='V'></a>V</b>, <font color='#0000FF'>typename</font>... Ts<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>struct</font> <b><a name='variant_caster'></a>variant_caster</b><font color='#5555FF'>&lt;</font>V<font color='#5555FF'>&lt;</font>Ts...<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> <b>{</b>
+    <b><a name='static_assert'></a>static_assert</b><font face='Lucida Console'>(</font><font color='#0000FF'>sizeof</font>...<font face='Lucida Console'>(</font>Ts<font face='Lucida Console'>)</font> <font color='#5555FF'>&gt;</font> <font color='#979000'>0</font>, "<font color='#CC0000'>Variant must consist of at least one alternative.</font>"<font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> U, <font color='#0000FF'>typename</font>... Us<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'><u>bool</u></font> <b><a name='load_alternative'></a>load_alternative</b><font face='Lucida Console'>(</font>handle src, <font color='#0000FF'><u>bool</u></font> convert, type_list<font color='#5555FF'>&lt;</font>U, Us...<font color='#5555FF'>&gt;</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>auto</font> caster <font color='#5555FF'>=</font> make_caster<font color='#5555FF'>&lt;</font>U<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>caster.<font color='#BB00BB'>load</font><font face='Lucida Console'>(</font>src, convert<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+            value <font color='#5555FF'>=</font> cast_op<font color='#5555FF'>&lt;</font>U<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>caster<font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>return</font> <font color='#979000'>true</font>;
+        <b>}</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>load_alternative</font><font face='Lucida Console'>(</font>src, convert, type_list<font color='#5555FF'>&lt;</font>Us...<font color='#5555FF'>&gt;</font><b>{</b><b>}</b><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'><u>bool</u></font> <b><a name='load_alternative'></a>load_alternative</b><font face='Lucida Console'>(</font>handle, <font color='#0000FF'><u>bool</u></font>, type_list<font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> <font color='#979000'>false</font>; <b>}</b>
+
+    <font color='#0000FF'><u>bool</u></font> <b><a name='load'></a>load</b><font face='Lucida Console'>(</font>handle src, <font color='#0000FF'><u>bool</u></font> convert<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#009900'>// Do a first pass without conversions to improve constructor resolution.
+</font>        <font color='#009900'>// E.g. `py::int_(1).cast&lt;variant&lt;double, int&gt;&gt;()` needs to fill the `int`
+</font>        <font color='#009900'>// slot of the variant. Without two-pass loading `double` would be filled
+</font>        <font color='#009900'>// because it appears first and a conversion is possible.
+</font>        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>convert <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font color='#BB00BB'>load_alternative</font><font face='Lucida Console'>(</font>src, <font color='#979000'>false</font>, type_list<font color='#5555FF'>&lt;</font>Ts...<font color='#5555FF'>&gt;</font><b>{</b><b>}</b><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            <font color='#0000FF'>return</font> <font color='#979000'>true</font>;
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>load_alternative</font><font face='Lucida Console'>(</font>src, convert, type_list<font color='#5555FF'>&lt;</font>Ts...<font color='#5555FF'>&gt;</font><b>{</b><b>}</b><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> Variant<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>static</font> handle <b><a name='cast'></a>cast</b><font face='Lucida Console'>(</font>Variant <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>src, return_value_policy policy, handle parent<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>return</font> visit_helper<font color='#5555FF'>&lt;</font>V<font color='#5555FF'>&gt;</font>::<font color='#BB00BB'>call</font><font face='Lucida Console'>(</font>variant_caster_visitor<b>{</b>policy, parent<b>}</b>,
+                                     std::forward<font color='#5555FF'>&lt;</font>Variant<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>src<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>using</font> Type <font color='#5555FF'>=</font> V<font color='#5555FF'>&lt;</font>Ts...<font color='#5555FF'>&gt;</font>;
+    <b><a name='PYBIND11_TYPE_CASTER'></a>PYBIND11_TYPE_CASTER</b><font face='Lucida Console'>(</font>Type, <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>Union[</font>"<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> detail::<font color='#BB00BB'>concat</font><font face='Lucida Console'>(</font>make_caster<font color='#5555FF'>&lt;</font>Ts<font color='#5555FF'>&gt;</font>::name...<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> <font color='#BB00BB'>_</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>]</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+<b>}</b>;
+
+<font color='#0000FF'>#if</font> PYBIND11_HAS_VARIANT
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font>... Ts<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>struct</font> <b><a name='type_caster'></a>type_caster</b><font color='#5555FF'>&lt;</font>std::variant<font color='#5555FF'>&lt;</font>Ts...<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> : variant_caster<font color='#5555FF'>&lt;</font>std::variant<font color='#5555FF'>&lt;</font>Ts...<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> <b>{</b> <b>}</b>;
+<font color='#0000FF'>#endif</font>
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+
+<font color='#0000FF'>inline</font> std::ostream <font color='#5555FF'>&amp;</font><b><a name='operator'></a>operator</b><font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font><font face='Lucida Console'>(</font>std::ostream <font color='#5555FF'>&amp;</font>os, <font color='#0000FF'>const</font> handle <font color='#5555FF'>&amp;</font>obj<font face='Lucida Console'>)</font> <b>{</b>
+    os <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> <font face='Lucida Console'>(</font>std::string<font face='Lucida Console'>)</font> <font color='#BB00BB'>str</font><font face='Lucida Console'>(</font>obj<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> os;
+<b>}</b>
+
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+
+<font color='#0000FF'>#if</font> defined<font face='Lucida Console'>(</font>_MSC_VER<font face='Lucida Console'>)</font>
+<font color='#0000FF'>#pragma</font> warning<font face='Lucida Console'>(</font>pop<font face='Lucida Console'>)</font>
+<font color='#0000FF'>#endif</font>
+
+</pre></body></html>

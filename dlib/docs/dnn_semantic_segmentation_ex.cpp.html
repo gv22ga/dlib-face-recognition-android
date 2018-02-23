@@ -1,0 +1,175 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - dnn_semantic_segmentation_ex.cpp</title></head><body bgcolor='white'><pre>
+<font color='#009900'>// The contents of this file are in the public domain. See LICENSE_FOR_EXAMPLE_PROGRAMS.txt
+</font><font color='#009900'>/*
+    This example shows how to do semantic segmentation on an image using net pretrained
+    on the PASCAL VOC2012 dataset.  For an introduction to what segmentation is, see the
+    accompanying header file dnn_semantic_segmentation_ex.h.
+
+    Instructions how to run the example:
+    1. Download the PASCAL VOC2012 data, and untar it somewhere.
+       http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
+    2. Build the dnn_semantic_segmentation_train_ex example program.
+    3. Run:
+       ./dnn_semantic_segmentation_train_ex /path/to/VOC2012
+    4. Wait while the network is being trained.
+    5. Build the dnn_semantic_segmentation_ex example program.
+    6. Run:
+       ./dnn_semantic_segmentation_ex /path/to/VOC2012-or-other-images
+
+    An alternative to steps 2-4 above is to download a pre-trained network
+    from here: http://dlib.net/files/semantic_segmentation_voc2012net.dnn
+
+    It would be a good idea to become familiar with dlib's DNN tooling before reading this
+    example.  So you should read <a href="dnn_introduction_ex.cpp.html">dnn_introduction_ex.cpp</a> and <a href="dnn_introduction2_ex.cpp.html">dnn_introduction2_ex.cpp</a>
+    before reading this example program.
+*/</font>
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='dnn_semantic_segmentation_ex.h.html'>dnn_semantic_segmentation_ex.h</a>"
+
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>iostream<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>dlib<font color='#5555FF'>/</font>data_io.h<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>dlib<font color='#5555FF'>/</font>gui_widgets.h<font color='#5555FF'>&gt;</font>
+
+<font color='#0000FF'>using</font> <font color='#0000FF'>namespace</font> std;
+<font color='#0000FF'>using</font> <font color='#0000FF'>namespace</font> dlib;
+ 
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+<font color='#009900'>// The PASCAL VOC2012 dataset contains 20 ground-truth classes + background.  Each class
+</font><font color='#009900'>// is represented using an RGB color value.  We associate each class also to an index in the
+</font><font color='#009900'>// range [0, 20], used internally by the network.  To generate nice RGB representations of
+</font><font color='#009900'>// inference results, we need to be able to convert the index values to the corresponding
+</font><font color='#009900'>// RGB values.
+</font>
+<font color='#009900'>// Given an index in the range [0, 20], find the corresponding PASCAL VOC2012 class
+</font><font color='#009900'>// (e.g., 'dog').
+</font><font color='#0000FF'>const</font> Voc2012class<font color='#5555FF'>&amp;</font> <b><a name='find_voc2012_class'></a>find_voc2012_class</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> uint16_t<font color='#5555FF'>&amp;</font> index_label<font face='Lucida Console'>)</font>
+<b>{</b>
+    <font color='#0000FF'>return</font> <font color='#BB00BB'>find_voc2012_class</font><font face='Lucida Console'>(</font>
+        [<font color='#5555FF'>&amp;</font>index_label]<font face='Lucida Console'>(</font><font color='#0000FF'>const</font> Voc2012class<font color='#5555FF'>&amp;</font> voc2012class<font face='Lucida Console'>)</font>
+        <b>{</b>
+            <font color='#0000FF'>return</font> index_label <font color='#5555FF'>=</font><font color='#5555FF'>=</font> voc2012class.index;
+        <b>}</b>
+    <font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#009900'>// Convert an index in the range [0, 20] to a corresponding RGB class label.
+</font><font color='#0000FF'>inline</font> rgb_pixel <b><a name='index_label_to_rgb_label'></a>index_label_to_rgb_label</b><font face='Lucida Console'>(</font>uint16_t index_label<font face='Lucida Console'>)</font>
+<b>{</b>
+    <font color='#0000FF'>return</font> <font color='#BB00BB'>find_voc2012_class</font><font face='Lucida Console'>(</font>index_label<font face='Lucida Console'>)</font>.rgb_label;
+<b>}</b>
+
+<font color='#009900'>// Convert an image containing indexes in the range [0, 20] to a corresponding
+</font><font color='#009900'>// image containing RGB class labels.
+</font><font color='#0000FF'><u>void</u></font> <b><a name='index_label_image_to_rgb_label_image'></a>index_label_image_to_rgb_label_image</b><font face='Lucida Console'>(</font>
+    <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font>uint16_t<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> index_label_image,
+    matrix<font color='#5555FF'>&lt;</font>rgb_pixel<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> rgb_label_image
+<font face='Lucida Console'>)</font>
+<b>{</b>
+    <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> nr <font color='#5555FF'>=</font> index_label_image.<font color='#BB00BB'>nr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> nc <font color='#5555FF'>=</font> index_label_image.<font color='#BB00BB'>nc</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+
+    rgb_label_image.<font color='#BB00BB'>set_size</font><font face='Lucida Console'>(</font>nr, nc<font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> r <font color='#5555FF'>=</font> <font color='#979000'>0</font>; r <font color='#5555FF'>&lt;</font> nr; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>r<font face='Lucida Console'>)</font>
+    <b>{</b>
+        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> c <font color='#5555FF'>=</font> <font color='#979000'>0</font>; c <font color='#5555FF'>&lt;</font> nc; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>c<font face='Lucida Console'>)</font>
+        <b>{</b>
+            <font color='#BB00BB'>rgb_label_image</font><font face='Lucida Console'>(</font>r, c<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#BB00BB'>index_label_to_rgb_label</font><font face='Lucida Console'>(</font><font color='#BB00BB'>index_label_image</font><font face='Lucida Console'>(</font>r, c<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <b>}</b>
+    <b>}</b>
+<b>}</b>
+
+<font color='#009900'>// Find the most prominent class label from amongst the per-pixel predictions.
+</font>std::string <b><a name='get_most_prominent_non_background_classlabel'></a>get_most_prominent_non_background_classlabel</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font>uint16_t<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> index_label_image<font face='Lucida Console'>)</font>
+<b>{</b>
+    <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> nr <font color='#5555FF'>=</font> index_label_image.<font color='#BB00BB'>nr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> nc <font color='#5555FF'>=</font> index_label_image.<font color='#BB00BB'>nc</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+
+    std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>int</u></font><font color='#5555FF'>&gt;</font> <font color='#BB00BB'>counters</font><font face='Lucida Console'>(</font>class_count<font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> r <font color='#5555FF'>=</font> <font color='#979000'>0</font>; r <font color='#5555FF'>&lt;</font> nr; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>r<font face='Lucida Console'>)</font>
+    <b>{</b>
+        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> c <font color='#5555FF'>=</font> <font color='#979000'>0</font>; c <font color='#5555FF'>&lt;</font> nc; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>c<font face='Lucida Console'>)</font>
+        <b>{</b>
+            <font color='#0000FF'>const</font> uint16_t label <font color='#5555FF'>=</font> <font color='#BB00BB'>index_label_image</font><font face='Lucida Console'>(</font>r, c<font face='Lucida Console'>)</font>;
+            <font color='#5555FF'>+</font><font color='#5555FF'>+</font>counters[label];
+        <b>}</b>
+    <b>}</b>
+
+    <font color='#0000FF'>const</font> <font color='#0000FF'>auto</font> max_element <font color='#5555FF'>=</font> std::<font color='#BB00BB'>max_element</font><font face='Lucida Console'>(</font>counters.<font color='#BB00BB'>begin</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> <font color='#979000'>1</font>, counters.<font color='#BB00BB'>end</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>const</font> uint16_t most_prominent_index_label <font color='#5555FF'>=</font> max_element <font color='#5555FF'>-</font> counters.<font color='#BB00BB'>begin</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>return</font> <font color='#BB00BB'>find_voc2012_class</font><font face='Lucida Console'>(</font>most_prominent_index_label<font face='Lucida Console'>)</font>.classlabel;
+<b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+<font color='#0000FF'><u>int</u></font> <b><a name='main'></a>main</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>int</u></font> argc, <font color='#0000FF'><u>char</u></font><font color='#5555FF'>*</font><font color='#5555FF'>*</font> argv<font face='Lucida Console'>)</font> <font color='#0000FF'>try</font>
+<b>{</b>
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>argc <font color='#5555FF'>!</font><font color='#5555FF'>=</font> <font color='#979000'>2</font><font face='Lucida Console'>)</font>
+    <b>{</b>
+        cout <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>You call this program like this: </font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> endl;
+        cout <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>./dnn_semantic_segmentation_train_ex /path/to/images</font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> endl;
+        cout <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> endl;
+        cout <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>You will also need a trained 'semantic_segmentation_voc2012net.dnn' file.</font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> endl;
+        cout <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>You can either train it yourself (see example program</font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> endl;
+        cout <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>dnn_semantic_segmentation_train_ex), or download a</font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> endl;
+        cout <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>copy from here: http://dlib.net/files/semantic_segmentation_voc2012net.dnn</font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> endl;
+        <font color='#0000FF'>return</font> <font color='#979000'>1</font>;
+    <b>}</b>
+
+    <font color='#009900'>// Read the file containing the trained network from the working directory.
+</font>    anet_type net;
+    <font color='#BB00BB'>deserialize</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>semantic_segmentation_voc2012net.dnn</font>"<font face='Lucida Console'>)</font> <font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> net;
+
+    <font color='#009900'>// Show inference results in a window.
+</font>    image_window win;
+
+    matrix<font color='#5555FF'>&lt;</font>rgb_pixel<font color='#5555FF'>&gt;</font> input_image;
+    matrix<font color='#5555FF'>&lt;</font>uint16_t<font color='#5555FF'>&gt;</font> index_label_image;
+    matrix<font color='#5555FF'>&lt;</font>rgb_pixel<font color='#5555FF'>&gt;</font> rgb_label_image;
+
+    <font color='#009900'>// Find supported image files.
+</font>    <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font>file<font color='#5555FF'>&gt;</font> files <font color='#5555FF'>=</font> dlib::<font color='#BB00BB'>get_files_in_directory_tree</font><font face='Lucida Console'>(</font>argv[<font color='#979000'>1</font>],
+        dlib::<font color='#BB00BB'>match_endings</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>.jpeg .jpg .png</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+    cout <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>Found </font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> files.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'> images, processing...</font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> endl;
+
+    <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>const</font> file<font color='#5555FF'>&amp;</font> file : files<font face='Lucida Console'>)</font>
+    <b>{</b>
+        <font color='#009900'>// Load the input image.
+</font>        <font color='#BB00BB'>load_image</font><font face='Lucida Console'>(</font>input_image, file.<font color='#BB00BB'>full_name</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+        <font color='#009900'>// Create predictions for each pixel. At this point, the type of each prediction
+</font>        <font color='#009900'>// is an index (a value between 0 and 20). Note that the net may return an image
+</font>        <font color='#009900'>// that is not exactly the same size as the input.
+</font>        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font>uint16_t<font color='#5555FF'>&gt;</font> temp <font color='#5555FF'>=</font> <font color='#BB00BB'>net</font><font face='Lucida Console'>(</font>input_image<font face='Lucida Console'>)</font>;
+
+        <font color='#009900'>// Crop the returned image to be exactly the same size as the input.
+</font>        <font color='#0000FF'>const</font> chip_details <font color='#BB00BB'>chip_details</font><font face='Lucida Console'>(</font>
+            <font color='#BB00BB'>centered_rect</font><font face='Lucida Console'>(</font>temp.<font color='#BB00BB'>nc</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>/</font> <font color='#979000'>2</font>, temp.<font color='#BB00BB'>nr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>/</font> <font color='#979000'>2</font>, input_image.<font color='#BB00BB'>nc</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, input_image.<font color='#BB00BB'>nr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>,
+            <font color='#BB00BB'>chip_dims</font><font face='Lucida Console'>(</font>input_image.<font color='#BB00BB'>nr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, input_image.<font color='#BB00BB'>nc</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+        <font face='Lucida Console'>)</font>;
+        <font color='#BB00BB'>extract_image_chip</font><font face='Lucida Console'>(</font>temp, chip_details, index_label_image, <font color='#BB00BB'>interpolate_nearest_neighbor</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+        <font color='#009900'>// Convert the indexes to RGB values.
+</font>        <font color='#BB00BB'>index_label_image_to_rgb_label_image</font><font face='Lucida Console'>(</font>index_label_image, rgb_label_image<font face='Lucida Console'>)</font>;
+
+        <font color='#009900'>// Show the input image on the left, and the predicted RGB labels on the right.
+</font>        win.<font color='#BB00BB'>set_image</font><font face='Lucida Console'>(</font><font color='#BB00BB'>join_rows</font><font face='Lucida Console'>(</font>input_image, rgb_label_image<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+        <font color='#009900'>// Find the most prominent class label from amongst the per-pixel predictions.
+</font>        <font color='#0000FF'>const</font> std::string classlabel <font color='#5555FF'>=</font> <font color='#BB00BB'>get_most_prominent_non_background_classlabel</font><font face='Lucida Console'>(</font>index_label_image<font face='Lucida Console'>)</font>;
+
+        cout <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> file.<font color='#BB00BB'>name</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'> : </font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> classlabel <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'> - hit enter to process the next image</font>";
+        cin.<font color='#BB00BB'>get</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+<b>}</b>
+<font color='#0000FF'>catch</font><font face='Lucida Console'>(</font>std::exception<font color='#5555FF'>&amp;</font> e<font face='Lucida Console'>)</font>
+<b>{</b>
+    cout <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> e.<font color='#BB00BB'>what</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> endl;
+<b>}</b>
+
+
+</pre></body></html>

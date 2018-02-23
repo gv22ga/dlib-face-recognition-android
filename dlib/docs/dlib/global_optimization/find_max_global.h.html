@@ -1,0 +1,514 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - find_max_global.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>// Copyright (C) 2017  Davis E. King (davis@dlib.net)
+</font><font color='#009900'>// License: Boost Software License   See LICENSE.txt for the full license.
+</font><font color='#0000FF'>#ifndef</font> DLIB_FiND_GLOBAL_MAXIMUM_hH_
+<font color='#0000FF'>#define</font> DLIB_FiND_GLOBAL_MAXIMUM_hH_
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='find_max_global_abstract.h.html'>find_max_global_abstract.h</a>"
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='global_function_search.h.html'>global_function_search.h</a>"
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='../metaprogramming.h.html'>../metaprogramming.h</a>"
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>utility<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>chrono<font color='#5555FF'>&gt;</font>
+
+<font color='#0000FF'>namespace</font> dlib
+<b>{</b>
+    <font color='#0000FF'>namespace</font> gopt_impl
+    <b>{</b>
+
+    <font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+        <font color='#0000FF'>class</font> <b><a name='disable_decay_to_scalar'></a>disable_decay_to_scalar</b> 
+        <b>{</b>
+            <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a;
+        <font color='#0000FF'>public</font>:
+            <b><a name='disable_decay_to_scalar'></a>disable_decay_to_scalar</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a<font face='Lucida Console'>)</font> : a<font face='Lucida Console'>(</font>a<font face='Lucida Console'>)</font><b>{</b><b>}</b>
+            <b><a name='operator'></a>operator</b> <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#0000FF'>const</font> <b>{</b> <font color='#0000FF'>return</font> a;<b>}</b>
+        <b>}</b>;
+
+
+        <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T, <font color='#0000FF'><u>size_t</u></font>... indices<font color='#5555FF'>&gt;</font> 
+        <font color='#0000FF'>auto</font> <b><a name='_cwv'></a>_cwv</b> <font face='Lucida Console'>(</font>
+            T<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> f, 
+            <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a, 
+            compile_time_integer_list<font color='#5555FF'>&lt;</font>indices...<font color='#5555FF'>&gt;</font>
+        <font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font><font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font>indices<font color='#5555FF'>-</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>...<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> 
+        <b>{</b>
+            <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>a.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#0000FF'>sizeof</font>...<font face='Lucida Console'>(</font>indices<font face='Lucida Console'>)</font>, 
+                "<font color='#CC0000'>You invoked dlib::call_function_and_expand_args(f,a) but the number of arguments expected by f() doesn't match the size of 'a'. </font>"
+                <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>Expected </font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> <font color='#0000FF'>sizeof</font>...<font face='Lucida Console'>(</font>indices<font face='Lucida Console'>)</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'> arguments but got </font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> a.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>.</font>"
+            <font face='Lucida Console'>)</font>;  
+            <font color='#0000FF'>return</font> <font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font>indices<font color='#5555FF'>-</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>...<font face='Lucida Console'>)</font>; 
+        <b>}</b>
+
+        <font color='#009900'>// Visual studio, as of November 2017, doesn't support C++11 and can't compile this code.  
+</font>        <font color='#009900'>// So we write the terrible garbage in the #else for visual studio.  When Visual Studio supports C++11 I'll update this #ifdef to use the C++11 code.
+</font><font color='#0000FF'>#ifndef</font> _MSC_VER 
+        <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font> max_unpack<font color='#5555FF'>&gt;</font>
+        <font color='#0000FF'>struct</font> <b><a name='call_function_and_expand_args'></a>call_function_and_expand_args</b>
+        <b>{</b>
+            <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font>
+            <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='go'></a>go</b><font face='Lucida Console'>(</font>T<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> f, <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font><font color='#BB00BB'>_cwv</font><font face='Lucida Console'>(</font>std::forward<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>,a,<font color='#0000FF'>typename</font> make_compile_time_integer_range<font color='#5555FF'>&lt;</font>max_unpack<font color='#5555FF'>&gt;</font>::<font color='#BB00BB'>type</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            <b>{</b>
+                <font color='#0000FF'>return</font> <font color='#BB00BB'>_cwv</font><font face='Lucida Console'>(</font>std::forward<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>,a,<font color='#0000FF'>typename</font> make_compile_time_integer_range<font color='#5555FF'>&lt;</font>max_unpack<font color='#5555FF'>&gt;</font>::<font color='#BB00BB'>type</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            <b>}</b>
+
+            <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font>
+            <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='go'></a>go</b><font face='Lucida Console'>(</font>T<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> f, <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font>call_function_and_expand_args<font color='#5555FF'>&lt;</font>max_unpack<font color='#5555FF'>-</font><font color='#979000'>1</font><font color='#5555FF'>&gt;</font>::<font color='#0000FF'>template</font> <font color='#BB00BB'>go</font><font face='Lucida Console'>(</font>std::forward<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>,a<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            <b>{</b>
+                <font color='#0000FF'>return</font> call_function_and_expand_args<font color='#5555FF'>&lt;</font>max_unpack<font color='#5555FF'>-</font><font color='#979000'>1</font><font color='#5555FF'>&gt;</font>::<font color='#BB00BB'>go</font><font face='Lucida Console'>(</font>std::forward<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>,a<font face='Lucida Console'>)</font>;
+            <b>}</b>
+        <b>}</b>;
+
+        <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font>
+        <font color='#0000FF'>struct</font> <b><a name='call_function_and_expand_args'></a>call_function_and_expand_args</b><font color='#5555FF'>&lt;</font><font color='#979000'>0</font><font color='#5555FF'>&gt;</font>
+        <b>{</b>
+            <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font>
+            <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='go'></a>go</b><font face='Lucida Console'>(</font>T<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> f, <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font><font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>disable_decay_to_scalar</font><font face='Lucida Console'>(</font>a<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            <b>{</b>
+                <font color='#0000FF'>return</font> <font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>disable_decay_to_scalar</font><font face='Lucida Console'>(</font>a<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            <b>}</b>
+        <b>}</b>;
+<font color='#0000FF'>#else</font>
+        <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font> max_unpack<font color='#5555FF'>&gt;</font>
+        <font color='#0000FF'>struct</font> <b><a name='call_function_and_expand_args'></a>call_function_and_expand_args</b>
+        <b>{</b>         
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='go'></a>go</b><font face='Lucida Console'>(</font>T<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> f, <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>, <font color='#979000'>0</font>, <font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font><font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>disable_decay_to_scalar</font><font face='Lucida Console'>(</font>a<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>  <b>{</b><font color='#0000FF'>return</font> <font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>disable_decay_to_scalar</font><font face='Lucida Console'>(</font>a<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;   <b>}</b>
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='go'></a>go</b><font face='Lucida Console'>(</font>T<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> f, <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>, <font color='#979000'>0</font>, <font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font><font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>a.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>1</font><font face='Lucida Console'>)</font>; <font color='#0000FF'>return</font> <font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <b>}</b>
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='go'></a>go</b><font face='Lucida Console'>(</font>T<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> f, <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>, <font color='#979000'>0</font>, <font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font><font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>,<font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>a.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>2</font><font face='Lucida Console'>)</font>; <font color='#0000FF'>return</font> <font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>,<font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <b>}</b>
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='go'></a>go</b><font face='Lucida Console'>(</font>T<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> f, <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>, <font color='#979000'>0</font>, <font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font><font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>2</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>a.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>3</font><font face='Lucida Console'>)</font>; <font color='#0000FF'>return</font> <font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>,<font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>2</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <b>}</b>
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='go'></a>go</b><font face='Lucida Console'>(</font>T<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> f, <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>, <font color='#979000'>0</font>, <font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font><font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>2</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>3</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>a.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>4</font><font face='Lucida Console'>)</font>; <font color='#0000FF'>return</font> <font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>2</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>3</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <b>}</b>
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='go'></a>go</b><font face='Lucida Console'>(</font>T<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> f, <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>, <font color='#979000'>0</font>, <font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font><font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>2</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>3</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>4</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>a.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>5</font><font face='Lucida Console'>)</font>; <font color='#0000FF'>return</font> <font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>2</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>3</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>4</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <b>}</b>
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='go'></a>go</b><font face='Lucida Console'>(</font>T<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> f, <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>, <font color='#979000'>0</font>, <font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font><font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>2</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>3</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>4</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>5</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>a.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>6</font><font face='Lucida Console'>)</font>; <font color='#0000FF'>return</font> <font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>2</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>3</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>4</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>5</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <b>}</b>
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>static</font> <font color='#0000FF'>auto</font> <b><a name='go'></a>go</b><font face='Lucida Console'>(</font>T<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> f, <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>, <font color='#979000'>0</font>, <font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font><font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>2</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>3</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>4</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>5</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>6</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>a.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>7</font><font face='Lucida Console'>)</font>; <font color='#0000FF'>return</font> <font color='#BB00BB'>f</font><font face='Lucida Console'>(</font><font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>2</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>3</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>4</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>5</font><font face='Lucida Console'>)</font>, <font color='#BB00BB'>a</font><font face='Lucida Console'>(</font><font color='#979000'>6</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <b>}</b>
+        <b>}</b>;
+<font color='#0000FF'>#endif</font>
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font><font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> 
+    <font color='#0000FF'>auto</font> <b><a name='call_function_and_expand_args'></a>call_function_and_expand_args</b><font face='Lucida Console'>(</font>
+        T<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> f, 
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> a
+    <font face='Lucida Console'>)</font> <font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font> <b><a name='decltype'></a>decltype</b><font face='Lucida Console'>(</font>gopt_impl::call_function_and_expand_args<font color='#5555FF'>&lt;</font><font color='#979000'>40</font><font color='#5555FF'>&gt;</font>::<font color='#BB00BB'>go</font><font face='Lucida Console'>(</font>f,a<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+    <b>{</b>
+        <font color='#009900'>// unpack up to 40 parameters when calling f()
+</font>        <font color='#0000FF'>return</font> gopt_impl::call_function_and_expand_args<font color='#5555FF'>&lt;</font><font color='#979000'>40</font><font color='#5555FF'>&gt;</font>::<font color='#BB00BB'>go</font><font face='Lucida Console'>(</font>std::forward<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>,a<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font><font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>struct</font> <b><a name='max_function_calls'></a>max_function_calls</b>
+    <b>{</b>
+        <b><a name='max_function_calls'></a>max_function_calls</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>default</font>;
+        <font color='#0000FF'>explicit</font> <b><a name='max_function_calls'></a>max_function_calls</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> max_calls<font face='Lucida Console'>)</font> : max_calls<font face='Lucida Console'>(</font>max_calls<font face='Lucida Console'>)</font> <b>{</b><b>}</b>
+        <font color='#0000FF'><u>size_t</u></font> max_calls <font color='#5555FF'>=</font> std::numeric_limits<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font><font color='#5555FF'>&gt;</font>::<b><a name='max'></a>max</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <b>}</b>;
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>const</font> <font color='#0000FF'>auto</font> FOREVER <font color='#5555FF'>=</font> std::chrono::<b><a name='hours'></a>hours</b><font face='Lucida Console'>(</font><font color='#979000'>24</font><font color='#5555FF'>*</font><font color='#979000'>356</font><font color='#5555FF'>*</font><font color='#979000'>290</font><font face='Lucida Console'>)</font>; <font color='#009900'>// 290 years
+</font>
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>namespace</font> impl
+    <b>{</b>
+        <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+            <font color='#0000FF'>typename</font> funct
+            <font color='#5555FF'>&gt;</font>
+        std::pair<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font>,function_evaluation<font color='#5555FF'>&gt;</font> <b><a name='find_max_global'></a>find_max_global</b> <font face='Lucida Console'>(</font>
+            std::vector<font color='#5555FF'>&lt;</font>funct<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> functions,
+            std::vector<font color='#5555FF'>&lt;</font>function_spec<font color='#5555FF'>&gt;</font> specs,
+            <font color='#0000FF'>const</font> max_function_calls num,
+            <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime,
+            <font color='#0000FF'><u>double</u></font> solver_epsilon,
+            <font color='#0000FF'><u>double</u></font> ymult
+        <font face='Lucida Console'>)</font> 
+        <b>{</b>
+            <font color='#009900'>// Decide which parameters should be searched on a log scale.  Basically, it's
+</font>            <font color='#009900'>// common for machine learning models to have parameters that should be searched on
+</font>            <font color='#009900'>// a log scale (e.g. SVM C).  These parameters are usually identifiable because
+</font>            <font color='#009900'>// they have bounds like [1e-5 1e10], that is, they span a very large range of
+</font>            <font color='#009900'>// magnitudes from really small to really big.  So there we are going to check for
+</font>            <font color='#009900'>// that and if we find parameters with that kind of bound constraints we will
+</font>            <font color='#009900'>// transform them to a log scale automatically.
+</font>            std::vector<font color='#5555FF'>&lt;</font>std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> <font color='#BB00BB'>log_scale</font><font face='Lucida Console'>(</font>specs.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> i <font color='#5555FF'>=</font> <font color='#979000'>0</font>; i <font color='#5555FF'>&lt;</font> specs.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>i<font face='Lucida Console'>)</font>
+            <b>{</b>
+                <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> j <font color='#5555FF'>=</font> <font color='#979000'>0</font>; j <font color='#5555FF'>&lt;</font> specs[i].lower.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>j<font face='Lucida Console'>)</font>
+                <b>{</b>
+                    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>specs[i].is_integer_variable[j] <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> specs[i].<font color='#BB00BB'>lower</font><font face='Lucida Console'>(</font>j<font face='Lucida Console'>)</font> <font color='#5555FF'>&gt;</font> <font color='#979000'>0</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> specs[i].<font color='#BB00BB'>upper</font><font face='Lucida Console'>(</font>j<font face='Lucida Console'>)</font><font color='#5555FF'>/</font>specs[i].<font color='#BB00BB'>lower</font><font face='Lucida Console'>(</font>j<font face='Lucida Console'>)</font> <font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font> <font color='#979000'>1000</font><font face='Lucida Console'>)</font>
+                    <b>{</b>
+                        log_scale[i].<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font><font color='#979000'>true</font><font face='Lucida Console'>)</font>;
+                        specs[i].<font color='#BB00BB'>lower</font><font face='Lucida Console'>(</font>j<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> std::<font color='#BB00BB'>log</font><font face='Lucida Console'>(</font>specs[i].<font color='#BB00BB'>lower</font><font face='Lucida Console'>(</font>j<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+                        specs[i].<font color='#BB00BB'>upper</font><font face='Lucida Console'>(</font>j<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> std::<font color='#BB00BB'>log</font><font face='Lucida Console'>(</font>specs[i].<font color='#BB00BB'>upper</font><font face='Lucida Console'>(</font>j<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+                    <b>}</b>
+                    <font color='#0000FF'>else</font>
+                    <b>{</b>
+                        log_scale[i].<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font><font color='#979000'>false</font><font face='Lucida Console'>)</font>;
+                    <b>}</b>
+                <b>}</b>
+            <b>}</b>
+
+            global_function_search <font color='#BB00BB'>opt</font><font face='Lucida Console'>(</font>specs<font face='Lucida Console'>)</font>;
+            opt.<font color='#BB00BB'>set_solver_epsilon</font><font face='Lucida Console'>(</font>solver_epsilon<font face='Lucida Console'>)</font>;
+
+            <font color='#0000FF'>const</font> <font color='#0000FF'>auto</font> time_to_stop <font color='#5555FF'>=</font> std::chrono::steady_clock::<font color='#BB00BB'>now</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> max_runtime;
+
+            <font color='#009900'>// Now run the main solver loop.
+</font>            <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> i <font color='#5555FF'>=</font> <font color='#979000'>0</font>; i <font color='#5555FF'>&lt;</font> num.max_calls <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> std::chrono::steady_clock::<font color='#BB00BB'>now</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&lt;</font> time_to_stop; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>i<font face='Lucida Console'>)</font>
+            <b>{</b>
+                <font color='#0000FF'>auto</font> next <font color='#5555FF'>=</font> opt.<font color='#BB00BB'>get_next_x</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+                matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> x <font color='#5555FF'>=</font> next.<font color='#BB00BB'>x</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+                <font color='#009900'>// Undo any log-scaling that was applied to the variables before we pass them
+</font>                <font color='#009900'>// to the functions being optimized.
+</font>                <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> j <font color='#5555FF'>=</font> <font color='#979000'>0</font>; j <font color='#5555FF'>&lt;</font> x.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>j<font face='Lucida Console'>)</font>
+                <b>{</b>
+                    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>log_scale[next.<font color='#BB00BB'>function_idx</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>][j]<font face='Lucida Console'>)</font>
+                        <font color='#BB00BB'>x</font><font face='Lucida Console'>(</font>j<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> std::<font color='#BB00BB'>exp</font><font face='Lucida Console'>(</font><font color='#BB00BB'>x</font><font face='Lucida Console'>(</font>j<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+                <b>}</b>
+                <font color='#0000FF'><u>double</u></font> y <font color='#5555FF'>=</font> ymult<font color='#5555FF'>*</font><font color='#BB00BB'>call_function_and_expand_args</font><font face='Lucida Console'>(</font>functions[next.<font color='#BB00BB'>function_idx</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>], x<font face='Lucida Console'>)</font>;
+                next.<font color='#BB00BB'>set</font><font face='Lucida Console'>(</font>y<font face='Lucida Console'>)</font>;
+            <b>}</b>
+
+
+            matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> x;
+            <font color='#0000FF'><u>double</u></font> y;
+            <font color='#0000FF'><u>size_t</u></font> function_idx;
+            opt.<font color='#BB00BB'>get_best_function_eval</font><font face='Lucida Console'>(</font>x,y,function_idx<font face='Lucida Console'>)</font>;
+            <font color='#009900'>// Undo any log-scaling that was applied to the variables before we output them. 
+</font>            <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> j <font color='#5555FF'>=</font> <font color='#979000'>0</font>; j <font color='#5555FF'>&lt;</font> x.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>j<font face='Lucida Console'>)</font>
+            <b>{</b>
+                <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>log_scale[function_idx][j]<font face='Lucida Console'>)</font>
+                    <font color='#BB00BB'>x</font><font face='Lucida Console'>(</font>j<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> std::<font color='#BB00BB'>exp</font><font face='Lucida Console'>(</font><font color='#BB00BB'>x</font><font face='Lucida Console'>(</font>j<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            <b>}</b>
+            <font color='#0000FF'>return</font> std::<font color='#BB00BB'>make_pair</font><font face='Lucida Console'>(</font>function_idx, <font color='#BB00BB'>function_evaluation</font><font face='Lucida Console'>(</font>x,y<font color='#5555FF'>/</font>ymult<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <b>}</b>
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    std::pair<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font>,function_evaluation<font color='#5555FF'>&gt;</font> <b><a name='find_max_global'></a>find_max_global</b> <font face='Lucida Console'>(</font>
+        std::vector<font color='#5555FF'>&lt;</font>funct<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> functions,
+        std::vector<font color='#5555FF'>&lt;</font>function_spec<font color='#5555FF'>&gt;</font> specs,
+        <font color='#0000FF'>const</font> max_function_calls num,
+        <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime <font color='#5555FF'>=</font> FOREVER,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> impl::<font color='#BB00BB'>find_max_global</font><font face='Lucida Console'>(</font>functions, std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>specs<font face='Lucida Console'>)</font>, num, max_runtime, solver_epsilon, <font color='#5555FF'>+</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    std::pair<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font>,function_evaluation<font color='#5555FF'>&gt;</font> <b><a name='find_min_global'></a>find_min_global</b> <font face='Lucida Console'>(</font>
+        std::vector<font color='#5555FF'>&lt;</font>funct<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> functions,
+        std::vector<font color='#5555FF'>&lt;</font>function_spec<font color='#5555FF'>&gt;</font> specs,
+        <font color='#0000FF'>const</font> max_function_calls num,
+        <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime <font color='#5555FF'>=</font> FOREVER,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> impl::<font color='#BB00BB'>find_max_global</font><font face='Lucida Console'>(</font>functions, std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>specs<font face='Lucida Console'>)</font>, num, max_runtime, solver_epsilon, <font color='#5555FF'>-</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_max_global'></a>find_max_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound1,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound2,
+        <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> is_integer_variable,
+        <font color='#0000FF'>const</font> max_function_calls num,
+        <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime <font color='#5555FF'>=</font> FOREVER,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        std::vector<font color='#5555FF'>&lt;</font>funct<font color='#5555FF'>&gt;</font> <font color='#BB00BB'>functions</font><font face='Lucida Console'>(</font><font color='#979000'>1</font>,std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        std::vector<font color='#5555FF'>&lt;</font>function_spec<font color='#5555FF'>&gt;</font> <font color='#BB00BB'>specs</font><font face='Lucida Console'>(</font><font color='#979000'>1</font>, <font color='#BB00BB'>function_spec</font><font face='Lucida Console'>(</font>bound1, bound2, is_integer_variable<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_max_global</font><font face='Lucida Console'>(</font>functions, std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>specs<font face='Lucida Console'>)</font>, num, max_runtime, solver_epsilon<font face='Lucida Console'>)</font>.second;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_min_global'></a>find_min_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound1,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound2,
+        <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> is_integer_variable,
+        <font color='#0000FF'>const</font> max_function_calls num,
+        <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime <font color='#5555FF'>=</font> FOREVER,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        std::vector<font color='#5555FF'>&lt;</font>funct<font color='#5555FF'>&gt;</font> <font color='#BB00BB'>functions</font><font face='Lucida Console'>(</font><font color='#979000'>1</font>,std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        std::vector<font color='#5555FF'>&lt;</font>function_spec<font color='#5555FF'>&gt;</font> <font color='#BB00BB'>specs</font><font face='Lucida Console'>(</font><font color='#979000'>1</font>, <font color='#BB00BB'>function_spec</font><font face='Lucida Console'>(</font>bound1, bound2, is_integer_variable<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_min_global</font><font face='Lucida Console'>(</font>functions, std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>specs<font face='Lucida Console'>)</font>, num, max_runtime, solver_epsilon<font face='Lucida Console'>)</font>.second;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_max_global'></a>find_max_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound1,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound2,
+        <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> is_integer_variable,
+        <font color='#0000FF'>const</font> max_function_calls num,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon 
+    <font face='Lucida Console'>)</font>
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_max_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, bound1, bound2, is_integer_variable, num, FOREVER, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_min_global'></a>find_min_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound1,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound2,
+        <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> is_integer_variable,
+        <font color='#0000FF'>const</font> max_function_calls num,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon 
+    <font face='Lucida Console'>)</font>
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_min_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, bound1, bound2, is_integer_variable, num, FOREVER, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_max_global'></a>find_max_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound1,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound2,
+        <font color='#0000FF'>const</font> max_function_calls num,
+        <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime <font color='#5555FF'>=</font> FOREVER,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_max_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, bound1, bound2, std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>bound1.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>,<font color='#979000'>false</font><font face='Lucida Console'>)</font>, num, max_runtime, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_min_global'></a>find_min_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound1,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound2,
+        <font color='#0000FF'>const</font> max_function_calls num,
+        <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime <font color='#5555FF'>=</font> FOREVER,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_min_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, bound1, bound2, std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>bound1.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>,<font color='#979000'>false</font><font face='Lucida Console'>)</font>, num, max_runtime, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_max_global'></a>find_max_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound1,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound2,
+        <font color='#0000FF'>const</font> max_function_calls num,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_max_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, bound1, bound2, std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>bound1.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>,<font color='#979000'>false</font><font face='Lucida Console'>)</font>, num, FOREVER, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_min_global'></a>find_min_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound1,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound2,
+        <font color='#0000FF'>const</font> max_function_calls num,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_min_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, bound1, bound2, std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>bound1.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>,<font color='#979000'>false</font><font face='Lucida Console'>)</font>, num, FOREVER, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_max_global'></a>find_max_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> bound1,
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> bound2,
+        <font color='#0000FF'>const</font> max_function_calls num,
+        <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime <font color='#5555FF'>=</font> FOREVER,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_max_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><b>{</b>bound1<b>}</b><font face='Lucida Console'>)</font>, matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><b>{</b>bound2<b>}</b><font face='Lucida Console'>)</font>, num, max_runtime, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_min_global'></a>find_min_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> bound1,
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> bound2,
+        <font color='#0000FF'>const</font> max_function_calls num,
+        <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime <font color='#5555FF'>=</font> FOREVER,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_min_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><b>{</b>bound1<b>}</b><font face='Lucida Console'>)</font>, matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><b>{</b>bound2<b>}</b><font face='Lucida Console'>)</font>, num, max_runtime, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_max_global'></a>find_max_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> bound1,
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> bound2,
+        <font color='#0000FF'>const</font> max_function_calls num,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon 
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_max_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><b>{</b>bound1<b>}</b><font face='Lucida Console'>)</font>, matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><b>{</b>bound2<b>}</b><font face='Lucida Console'>)</font>, num, FOREVER, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_min_global'></a>find_min_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> bound1,
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> bound2,
+        <font color='#0000FF'>const</font> max_function_calls num,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon 
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_min_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><b>{</b>bound1<b>}</b><font face='Lucida Console'>)</font>, matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><b>{</b>bound2<b>}</b><font face='Lucida Console'>)</font>, num, FOREVER, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_max_global'></a>find_max_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound1,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound2,
+        <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_max_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, bound1, bound2, <font color='#BB00BB'>max_function_calls</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, max_runtime, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_min_global'></a>find_min_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound1,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound2,
+        <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_min_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, bound1, bound2, <font color='#BB00BB'>max_function_calls</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, max_runtime, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_max_global'></a>find_max_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> bound1,
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> bound2,
+        <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_max_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, bound1, bound2, <font color='#BB00BB'>max_function_calls</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, max_runtime, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_min_global'></a>find_min_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> bound1,
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> bound2,
+        <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_min_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, bound1, bound2, <font color='#BB00BB'>max_function_calls</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, max_runtime, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_max_global'></a>find_max_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound1,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound2,
+        <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> is_integer_variable,
+        <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_max_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, bound1, bound2, is_integer_variable, <font color='#BB00BB'>max_function_calls</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, max_runtime, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+        <font color='#0000FF'>typename</font> funct
+        <font color='#5555FF'>&gt;</font>
+    function_evaluation <b><a name='find_min_global'></a>find_min_global</b> <font face='Lucida Console'>(</font>
+        funct f,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound1,
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> bound2,
+        <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> is_integer_variable,
+        <font color='#0000FF'>const</font> std::chrono::nanoseconds max_runtime,
+        <font color='#0000FF'><u>double</u></font> solver_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>
+    <font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>find_min_global</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, bound1, bound2, is_integer_variable, <font color='#BB00BB'>max_function_calls</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, max_runtime, solver_epsilon<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+<b>}</b>
+
+<font color='#0000FF'>#endif</font> <font color='#009900'>// DLIB_FiND_GLOBAL_MAXIMUM_hH_
+</font>
+
+</pre></body></html>

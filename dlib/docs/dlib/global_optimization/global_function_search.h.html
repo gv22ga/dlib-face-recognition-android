@@ -1,0 +1,247 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - global_function_search.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>// Copyright (C) 2017  Davis E. King (davis@dlib.net)
+</font><font color='#009900'>// License: Boost Software License   See LICENSE.txt for the full license.
+</font><font color='#0000FF'>#ifndef</font> DLIB_GLOBAL_FuNCTION_SEARCH_Hh_
+<font color='#0000FF'>#define</font> DLIB_GLOBAL_FuNCTION_SEARCH_Hh_
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='global_function_search_abstract.h.html'>global_function_search_abstract.h</a>"
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>vector<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='../matrix.h.html'>../matrix.h</a>"
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>mutex<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='../rand.h.html'>../rand.h</a>"
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='upper_bound_function.h.html'>upper_bound_function.h</a>"
+
+<font color='#0000FF'>namespace</font> dlib
+<b>{</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>struct</font> <b><a name='function_spec'></a>function_spec</b>
+    <b>{</b>
+        <b><a name='function_spec'></a>function_spec</b><font face='Lucida Console'>(</font>
+            matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> bound1, 
+            matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> bound2
+        <font face='Lucida Console'>)</font>;
+
+        <b><a name='function_spec'></a>function_spec</b><font face='Lucida Console'>(</font>
+            matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> bound1, 
+            matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> bound2, 
+            std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font><font color='#5555FF'>&gt;</font> is_integer
+        <font face='Lucida Console'>)</font>;
+
+        matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> lower;
+        matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> upper;
+        std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>bool</u></font><font color='#5555FF'>&gt;</font> is_integer_variable;
+    <b>}</b>;
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>namespace</font> gopt_impl 
+    <b>{</b>
+        <font color='#0000FF'>struct</font> <b><a name='outstanding_function_eval_request'></a>outstanding_function_eval_request</b>
+        <b>{</b>
+            <font color='#0000FF'><u>size_t</u></font> request_id <font color='#5555FF'>=</font> <font color='#979000'>0</font>;   <font color='#009900'>// unique id for this eval request
+</font>            matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> x;   <font color='#009900'>// function x to evaluate 
+</font>
+            <font color='#009900'>// trust region specific stuff
+</font>            <font color='#0000FF'><u>bool</u></font> was_trust_region_generated_request <font color='#5555FF'>=</font> <font color='#979000'>false</font>;
+            <font color='#0000FF'><u>double</u></font> predicted_improvement <font color='#5555FF'>=</font> std::numeric_limits<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>::<b><a name='quiet_NaN'></a>quiet_NaN</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'><u>double</u></font> anchor_objective_value <font color='#5555FF'>=</font> std::numeric_limits<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>::<b><a name='quiet_NaN'></a>quiet_NaN</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#009900'>// objective value at center of TR step
+</font>
+            <font color='#0000FF'><u>bool</u></font> <b><a name='operator'></a>operator</b><font color='#5555FF'>=</font><font color='#5555FF'>=</font><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> outstanding_function_eval_request<font color='#5555FF'>&amp;</font> item<font face='Lucida Console'>)</font> <font color='#0000FF'>const</font> <b>{</b> <font color='#0000FF'>return</font> request_id <font color='#5555FF'>=</font><font color='#5555FF'>=</font> item.request_id; <b>}</b>
+        <b>}</b>;
+
+        <font color='#0000FF'>struct</font> <b><a name='funct_info'></a>funct_info</b>
+        <b>{</b>
+            <b><a name='funct_info'></a>funct_info</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+            <b><a name='funct_info'></a>funct_info</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> funct_info<font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+            funct_info<font color='#5555FF'>&amp;</font> <b><a name='operator'></a>operator</b><font color='#5555FF'>=</font><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> funct_info<font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+
+            <b><a name='funct_info'></a>funct_info</b><font face='Lucida Console'>(</font>
+                <font color='#0000FF'>const</font> function_spec<font color='#5555FF'>&amp;</font> spec,
+                <font color='#0000FF'><u>size_t</u></font> function_idx, 
+                <font color='#0000FF'>const</font> std::shared_ptr<font color='#5555FF'>&lt;</font>std::mutex<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> m
+            <font face='Lucida Console'>)</font> : 
+                spec<font face='Lucida Console'>(</font>spec<font face='Lucida Console'>)</font>, function_idx<font face='Lucida Console'>(</font>function_idx<font face='Lucida Console'>)</font>, m<font face='Lucida Console'>(</font>m<font face='Lucida Console'>)</font>
+            <b>{</b>
+                best_x <font color='#5555FF'>=</font> <font color='#BB00BB'>zeros_matrix</font><font face='Lucida Console'>(</font>spec.lower<font face='Lucida Console'>)</font>;
+            <b>}</b>
+
+            upper_bound_function <b><a name='build_upper_bound_with_all_function_evals'></a>build_upper_bound_with_all_function_evals</b> <font face='Lucida Console'>(</font>
+            <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>;
+
+            <font color='#0000FF'>static</font> <font color='#0000FF'><u>double</u></font> <b><a name='find_nn'></a>find_nn</b> <font face='Lucida Console'>(</font>
+                <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font>function_evaluation<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> evals,
+                <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> x
+            <font face='Lucida Console'>)</font>;
+
+
+            function_spec spec;
+            <font color='#0000FF'><u>size_t</u></font> function_idx <font color='#5555FF'>=</font> <font color='#979000'>0</font>;
+            std::shared_ptr<font color='#5555FF'>&lt;</font>std::mutex<font color='#5555FF'>&gt;</font> m;
+            upper_bound_function ub;
+            std::vector<font color='#5555FF'>&lt;</font>outstanding_function_eval_request<font color='#5555FF'>&gt;</font> outstanding_evals;
+            matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> best_x; 
+            <font color='#0000FF'><u>double</u></font> best_objective_value <font color='#5555FF'>=</font> <font color='#5555FF'>-</font>std::numeric_limits<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>::<b><a name='infinity'></a>infinity</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; 
+            <font color='#0000FF'><u>double</u></font> radius <font color='#5555FF'>=</font> <font color='#979000'>0</font>;
+        <b>}</b>;
+
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>class</font> <b><a name='function_evaluation_request'></a>function_evaluation_request</b>
+    <b>{</b>
+    <font color='#0000FF'>public</font>:
+
+        <b><a name='function_evaluation_request'></a>function_evaluation_request</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+        <b><a name='function_evaluation_request'></a>function_evaluation_request</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> function_evaluation_request<font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+        function_evaluation_request<font color='#5555FF'>&amp;</font> <b><a name='operator'></a>operator</b><font color='#5555FF'>=</font><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> function_evaluation_request<font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+
+
+        <b><a name='function_evaluation_request'></a>function_evaluation_request</b><font face='Lucida Console'>(</font>function_evaluation_request<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> item<font face='Lucida Console'>)</font>;
+        function_evaluation_request<font color='#5555FF'>&amp;</font> <b><a name='operator'></a>operator</b><font color='#5555FF'>=</font><font face='Lucida Console'>(</font>function_evaluation_request<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> item<font face='Lucida Console'>)</font>;
+
+        ~<b><a name='function_evaluation_request'></a>function_evaluation_request</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+
+        <font color='#0000FF'><u>size_t</u></font> <b><a name='function_idx'></a>function_idx</b> <font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>;
+
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> <b><a name='x'></a>x</b> <font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>;
+
+        <font color='#0000FF'><u>bool</u></font> <b><a name='has_been_evaluated'></a>has_been_evaluated</b> <font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>;
+
+        <font color='#0000FF'><u>void</u></font> <b><a name='set'></a>set</b> <font face='Lucida Console'>(</font>
+            <font color='#0000FF'><u>double</u></font> y
+        <font face='Lucida Console'>)</font>;
+
+        <font color='#0000FF'><u>void</u></font> <b><a name='swap'></a>swap</b><font face='Lucida Console'>(</font>function_evaluation_request<font color='#5555FF'>&amp;</font> item<font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>private</font>:
+
+        <font color='#0000FF'>friend</font> <font color='#0000FF'>class</font> global_function_search;
+
+        <font color='#0000FF'>explicit</font> <b><a name='function_evaluation_request'></a>function_evaluation_request</b><font face='Lucida Console'>(</font>
+            <font color='#0000FF'>const</font> gopt_impl::outstanding_function_eval_request<font color='#5555FF'>&amp;</font> req,
+            <font color='#0000FF'>const</font> std::shared_ptr<font color='#5555FF'>&lt;</font>gopt_impl::funct_info<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> info
+        <font face='Lucida Console'>)</font> : req<font face='Lucida Console'>(</font>req<font face='Lucida Console'>)</font>, info<font face='Lucida Console'>(</font>info<font face='Lucida Console'>)</font> <b>{</b><b>}</b>
+
+        <font color='#0000FF'><u>bool</u></font> m_has_been_evaluated <font color='#5555FF'>=</font> <font color='#979000'>false</font>;
+        gopt_impl::outstanding_function_eval_request req;
+        std::shared_ptr<font color='#5555FF'>&lt;</font>gopt_impl::funct_info<font color='#5555FF'>&gt;</font> info;
+    <b>}</b>;
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>class</font> <b><a name='global_function_search'></a>global_function_search</b>
+    <b>{</b>
+    <font color='#0000FF'>public</font>:
+
+        <b><a name='global_function_search'></a>global_function_search</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>default</font>;
+
+        <font color='#0000FF'>explicit</font> <b><a name='global_function_search'></a>global_function_search</b><font face='Lucida Console'>(</font>
+            <font color='#0000FF'>const</font> function_spec<font color='#5555FF'>&amp;</font> function
+        <font face='Lucida Console'>)</font>; 
+
+        <font color='#0000FF'>explicit</font> <b><a name='global_function_search'></a>global_function_search</b><font face='Lucida Console'>(</font>
+            <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font>function_spec<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> functions_
+        <font face='Lucida Console'>)</font>;
+
+        <b><a name='global_function_search'></a>global_function_search</b><font face='Lucida Console'>(</font>
+            <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font>function_spec<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> functions_,
+            <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font>std::vector<font color='#5555FF'>&lt;</font>function_evaluation<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> initial_function_evals,
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> relative_noise_magnitude <font color='#5555FF'>=</font> <font color='#979000'>0.001</font>
+        <font face='Lucida Console'>)</font>; 
+
+        <b><a name='global_function_search'></a>global_function_search</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> global_function_search<font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+        global_function_search<font color='#5555FF'>&amp;</font> <b><a name='operator'></a>operator</b><font color='#5555FF'>=</font><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> global_function_search<font color='#5555FF'>&amp;</font> item<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+
+        <b><a name='global_function_search'></a>global_function_search</b><font face='Lucida Console'>(</font>global_function_search<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> item<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>default</font>;
+        global_function_search<font color='#5555FF'>&amp;</font> <b><a name='operator'></a>operator</b><font color='#5555FF'>=</font><font face='Lucida Console'>(</font>global_function_search<font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> item<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>default</font>;
+
+        <font color='#0000FF'><u>size_t</u></font> <b><a name='num_functions'></a>num_functions</b><font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>;
+
+        <font color='#0000FF'><u>void</u></font> <b><a name='set_seed'></a>set_seed</b> <font face='Lucida Console'>(</font>
+            time_t seed
+        <font face='Lucida Console'>)</font>;
+
+        <font color='#0000FF'><u>void</u></font> <b><a name='get_function_evaluations'></a>get_function_evaluations</b> <font face='Lucida Console'>(</font>
+            std::vector<font color='#5555FF'>&lt;</font>function_spec<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> specs,
+            std::vector<font color='#5555FF'>&lt;</font>std::vector<font color='#5555FF'>&lt;</font>function_evaluation<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> function_evals
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>;
+
+        <font color='#0000FF'><u>void</u></font> <b><a name='get_best_function_eval'></a>get_best_function_eval</b> <font face='Lucida Console'>(</font>
+            matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> x,
+            <font color='#0000FF'><u>double</u></font><font color='#5555FF'>&amp;</font> y,
+            <font color='#0000FF'><u>size_t</u></font><font color='#5555FF'>&amp;</font> function_idx
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>;
+
+        function_evaluation_request <b><a name='get_next_x'></a>get_next_x</b> <font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font>; 
+
+        <font color='#0000FF'><u>double</u></font> <b><a name='get_pure_random_search_probability'></a>get_pure_random_search_probability</b> <font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>; 
+
+        <font color='#0000FF'><u>void</u></font> <b><a name='set_pure_random_search_probability'></a>set_pure_random_search_probability</b> <font face='Lucida Console'>(</font>
+            <font color='#0000FF'><u>double</u></font> prob
+        <font face='Lucida Console'>)</font>;
+
+        <font color='#0000FF'><u>double</u></font> <b><a name='get_solver_epsilon'></a>get_solver_epsilon</b> <font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>; 
+
+        <font color='#0000FF'><u>void</u></font> <b><a name='set_solver_epsilon'></a>set_solver_epsilon</b> <font face='Lucida Console'>(</font>
+            <font color='#0000FF'><u>double</u></font> eps
+        <font face='Lucida Console'>)</font>;
+
+        <font color='#0000FF'><u>double</u></font> <b><a name='get_relative_noise_magnitude'></a>get_relative_noise_magnitude</b> <font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>; 
+
+        <font color='#0000FF'><u>void</u></font> <b><a name='set_relative_noise_magnitude'></a>set_relative_noise_magnitude</b> <font face='Lucida Console'>(</font>
+            <font color='#0000FF'><u>double</u></font> value
+        <font face='Lucida Console'>)</font>;
+
+        <font color='#0000FF'><u>size_t</u></font> <b><a name='get_monte_carlo_upper_bound_sample_num'></a>get_monte_carlo_upper_bound_sample_num</b> <font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>; 
+
+        <font color='#0000FF'><u>void</u></font> <b><a name='set_monte_carlo_upper_bound_sample_num'></a>set_monte_carlo_upper_bound_sample_num</b> <font face='Lucida Console'>(</font>
+            <font color='#0000FF'><u>size_t</u></font> num
+        <font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>private</font>:
+
+        std::shared_ptr<font color='#5555FF'>&lt;</font>gopt_impl::funct_info<font color='#5555FF'>&gt;</font> <b><a name='best_function'></a>best_function</b><font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>;
+
+        std::shared_ptr<font color='#5555FF'>&lt;</font>gopt_impl::funct_info<font color='#5555FF'>&gt;</font> <b><a name='best_function'></a>best_function</b><font face='Lucida Console'>(</font>
+            <font color='#0000FF'><u>size_t</u></font><font color='#5555FF'>&amp;</font> idx
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>;
+
+        <font color='#0000FF'><u>bool</u></font> <b><a name='has_outstanding_trust_region_request'></a>has_outstanding_trust_region_request</b> <font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>;
+
+
+        dlib::rand rnd;
+        <font color='#0000FF'><u>double</u></font> pure_random_search_probability <font color='#5555FF'>=</font> <font color='#979000'>0.02</font>;
+        <font color='#0000FF'><u>double</u></font> min_trust_region_epsilon <font color='#5555FF'>=</font> <font color='#979000'>0</font>;
+        <font color='#0000FF'><u>double</u></font> relative_noise_magnitude <font color='#5555FF'>=</font> <font color='#979000'>0.001</font>;
+        <font color='#0000FF'><u>size_t</u></font> num_random_samples <font color='#5555FF'>=</font> <font color='#979000'>5000</font>;
+        <font color='#0000FF'><u>bool</u></font> do_trust_region_step <font color='#5555FF'>=</font> <font color='#979000'>true</font>;
+
+        <font color='#0000FF'><u>size_t</u></font> next_request_id <font color='#5555FF'>=</font> <font color='#979000'>1</font>;
+
+        std::vector<font color='#5555FF'>&lt;</font>std::shared_ptr<font color='#5555FF'>&lt;</font>gopt_impl::funct_info<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> functions;
+        std::shared_ptr<font color='#5555FF'>&lt;</font>std::mutex<font color='#5555FF'>&gt;</font> m;
+
+    <b>}</b>;
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+<b>}</b>
+
+<font color='#0000FF'>#endif</font> <font color='#009900'>// DLIB_GLOBAL_FuNCTION_SEARCH_Hh_
+</font>
+
+</pre></body></html>

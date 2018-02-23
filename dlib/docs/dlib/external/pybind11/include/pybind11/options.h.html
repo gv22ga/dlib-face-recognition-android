@@ -1,0 +1,68 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - options.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>/*
+    pybind11/options.h: global settings that are configurable at runtime.
+
+    Copyright (c) 2016 Wenzel Jakob &lt;wenzel.jakob@epfl.ch&gt;
+
+    All rights reserved. Use of this source code is governed by a
+    BSD-style license that can be found in the LICENSE file.
+*/</font>
+
+<font color='#0000FF'>#pragma</font> once
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='detail/common.h.html'>detail/common.h</a>"
+
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+
+<font color='#0000FF'>class</font> <b><a name='options'></a>options</b> <b>{</b>
+<font color='#0000FF'>public</font>:
+
+    <font color='#009900'>// Default RAII constructor, which leaves settings as they currently are.
+</font>    <b><a name='options'></a>options</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> : previous_state<font face='Lucida Console'>(</font>global_state<font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b><b>}</b>
+
+    <font color='#009900'>// Class is non-copyable.
+</font>    <b><a name='options'></a>options</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> options<font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+    options<font color='#5555FF'>&amp;</font> <b><a name='operator'></a>operator</b><font color='#5555FF'>=</font><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> options<font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+
+    <font color='#009900'>// Destructor, which restores settings that were in effect before.
+</font>    ~<b><a name='options'></a>options</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#BB00BB'>global_state</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> previous_state;
+    <b>}</b>
+
+    <font color='#009900'>// Setter methods (affect the global state):
+</font>
+    options<font color='#5555FF'>&amp;</font> <b><a name='disable_user_defined_docstrings'></a>disable_user_defined_docstrings</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font> <b>{</b> <font color='#BB00BB'>global_state</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.show_user_defined_docstrings <font color='#5555FF'>=</font> <font color='#979000'>false</font>; <font color='#0000FF'>return</font> <font color='#5555FF'>*</font><font color='#0000FF'>this</font>; <b>}</b>
+
+    options<font color='#5555FF'>&amp;</font> <b><a name='enable_user_defined_docstrings'></a>enable_user_defined_docstrings</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font> <b>{</b> <font color='#BB00BB'>global_state</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.show_user_defined_docstrings <font color='#5555FF'>=</font> <font color='#979000'>true</font>; <font color='#0000FF'>return</font> <font color='#5555FF'>*</font><font color='#0000FF'>this</font>; <b>}</b>
+
+    options<font color='#5555FF'>&amp;</font> <b><a name='disable_function_signatures'></a>disable_function_signatures</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font> <b>{</b> <font color='#BB00BB'>global_state</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.show_function_signatures <font color='#5555FF'>=</font> <font color='#979000'>false</font>; <font color='#0000FF'>return</font> <font color='#5555FF'>*</font><font color='#0000FF'>this</font>; <b>}</b>
+
+    options<font color='#5555FF'>&amp;</font> <b><a name='enable_function_signatures'></a>enable_function_signatures</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font> <b>{</b> <font color='#BB00BB'>global_state</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.show_function_signatures <font color='#5555FF'>=</font> <font color='#979000'>true</font>; <font color='#0000FF'>return</font> <font color='#5555FF'>*</font><font color='#0000FF'>this</font>; <b>}</b>
+
+    <font color='#009900'>// Getter methods (return the global state):
+</font>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>bool</u></font> <b><a name='show_user_defined_docstrings'></a>show_user_defined_docstrings</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> <font color='#BB00BB'>global_state</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.show_user_defined_docstrings; <b>}</b>
+
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>bool</u></font> <b><a name='show_function_signatures'></a>show_function_signatures</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> <font color='#BB00BB'>global_state</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.show_function_signatures; <b>}</b>
+
+    <font color='#009900'>// This type is not meant to be allocated on the heap.
+</font>    <font color='#0000FF'><u>void</u></font><font color='#5555FF'>*</font> <b><a name='operator'></a>operator</b> <font color='#0000FF'>new</font><font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+
+<font color='#0000FF'>private</font>:
+
+    <font color='#0000FF'>struct</font> <b><a name='state'></a>state</b> <b>{</b>
+        <font color='#0000FF'><u>bool</u></font> show_user_defined_docstrings <font color='#5555FF'>=</font> <font color='#979000'>true</font>;  <font color='#009900'>//&lt; Include user-supplied texts in docstrings.
+</font>        <font color='#0000FF'><u>bool</u></font> show_function_signatures <font color='#5555FF'>=</font> <font color='#979000'>true</font>;      <font color='#009900'>//&lt; Include auto-generated function signatures in docstrings.
+</font>    <b>}</b>;
+
+    <font color='#0000FF'>static</font> state <font color='#5555FF'>&amp;</font><b><a name='global_state'></a>global_state</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>static</font> state instance;
+        <font color='#0000FF'>return</font> instance;
+    <b>}</b>
+
+    state previous_state;
+<b>}</b>;
+
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+
+</pre></body></html>

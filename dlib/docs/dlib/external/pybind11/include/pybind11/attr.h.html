@@ -1,0 +1,492 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - attr.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>/*
+    pybind11/attr.h: Infrastructure for processing custom
+    type and function attributes
+
+    Copyright (c) 2016 Wenzel Jakob &lt;wenzel.jakob@epfl.ch&gt;
+
+    All rights reserved. Use of this source code is governed by a
+    BSD-style license that can be found in the LICENSE file.
+*/</font>
+
+<font color='#0000FF'>#pragma</font> once
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='cast.h.html'>cast.h</a>"
+
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+
+<font color='#009900'>/// \addtogroup annotations
+</font><font color='#009900'>/// @{
+</font>
+<font color='#009900'>/// Annotation for methods
+</font><font color='#0000FF'>struct</font> <b><a name='is_method'></a>is_method</b> <b>{</b> handle class_; <b><a name='is_method'></a>is_method</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> handle <font color='#5555FF'>&amp;</font>c<font face='Lucida Console'>)</font> : class_<font face='Lucida Console'>(</font>c<font face='Lucida Console'>)</font> <b>{</b> <b>}</b> <b>}</b>;
+
+<font color='#009900'>/// Annotation for operators
+</font><font color='#0000FF'>struct</font> <b><a name='is_operator'></a>is_operator</b> <b>{</b> <b>}</b>;
+
+<font color='#009900'>/// Annotation for parent scope
+</font><font color='#0000FF'>struct</font> <b><a name='scope'></a>scope</b> <b>{</b> handle value; <b><a name='scope'></a>scope</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> handle <font color='#5555FF'>&amp;</font>s<font face='Lucida Console'>)</font> : value<font face='Lucida Console'>(</font>s<font face='Lucida Console'>)</font> <b>{</b> <b>}</b> <b>}</b>;
+
+<font color='#009900'>/// Annotation for documentation
+</font><font color='#0000FF'>struct</font> <b><a name='doc'></a>doc</b> <b>{</b> <font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>value; <b><a name='doc'></a>doc</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>value<font face='Lucida Console'>)</font> : value<font face='Lucida Console'>(</font>value<font face='Lucida Console'>)</font> <b>{</b> <b>}</b> <b>}</b>;
+
+<font color='#009900'>/// Annotation for function names
+</font><font color='#0000FF'>struct</font> <b><a name='name'></a>name</b> <b>{</b> <font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>value; <b><a name='name'></a>name</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>value<font face='Lucida Console'>)</font> : value<font face='Lucida Console'>(</font>value<font face='Lucida Console'>)</font> <b>{</b> <b>}</b> <b>}</b>;
+
+<font color='#009900'>/// Annotation indicating that a function is an overload associated with a given "sibling"
+</font><font color='#0000FF'>struct</font> <b><a name='sibling'></a>sibling</b> <b>{</b> handle value; <b><a name='sibling'></a>sibling</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> handle <font color='#5555FF'>&amp;</font>value<font face='Lucida Console'>)</font> : value<font face='Lucida Console'>(</font>value.ptr<font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b> <b>}</b> <b>}</b>;
+
+<font color='#009900'>/// Annotation indicating that a class derives from another given type
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='base'></a>base</b> <b>{</b>
+    <b><a name='PYBIND11_DEPRECATED'></a>PYBIND11_DEPRECATED</b><font face='Lucida Console'>(</font>"<font color='#CC0000'>base&lt;T&gt;() was deprecated in favor of specifying 'T' as a template argument to class_</font>"<font face='Lucida Console'>)</font>
+    <b><a name='base'></a>base</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Keep patient alive while nurse lives
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font> Nurse, <font color='#0000FF'><u>size_t</u></font> Patient<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='keep_alive'></a>keep_alive</b> <b>{</b> <b>}</b>;
+
+<font color='#009900'>/// Annotation indicating that a class is involved in a multiple inheritance relationship
+</font><font color='#0000FF'>struct</font> <b><a name='multiple_inheritance'></a>multiple_inheritance</b> <b>{</b> <b>}</b>;
+
+<font color='#009900'>/// Annotation which enables dynamic attributes, i.e. adds `__dict__` to a class
+</font><font color='#0000FF'>struct</font> <b><a name='dynamic_attr'></a>dynamic_attr</b> <b>{</b> <b>}</b>;
+
+<font color='#009900'>/// Annotation which enables the buffer protocol for a type
+</font><font color='#0000FF'>struct</font> <b><a name='buffer_protocol'></a>buffer_protocol</b> <b>{</b> <b>}</b>;
+
+<font color='#009900'>/// Annotation which requests that a special metaclass is created for a type
+</font><font color='#0000FF'>struct</font> <b><a name='metaclass'></a>metaclass</b> <b>{</b>
+    handle value;
+
+    <b><a name='PYBIND11_DEPRECATED'></a>PYBIND11_DEPRECATED</b><font face='Lucida Console'>(</font>"<font color='#CC0000'>py::metaclass() is no longer required. It's turned on by default now.</font>"<font face='Lucida Console'>)</font>
+    <b><a name='metaclass'></a>metaclass</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b><b>}</b>
+
+    <font color='#009900'>/// Override pybind11's default metaclass
+</font>    <font color='#0000FF'>explicit</font> <b><a name='metaclass'></a>metaclass</b><font face='Lucida Console'>(</font>handle value<font face='Lucida Console'>)</font> : value<font face='Lucida Console'>(</font>value<font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Annotation that marks a class as local to the module:
+</font><font color='#0000FF'>struct</font> <b><a name='module_local'></a>module_local</b> <b>{</b> <font color='#0000FF'>const</font> <font color='#0000FF'><u>bool</u></font> value; constexpr <b><a name='module_local'></a>module_local</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>bool</u></font> v <font color='#5555FF'>=</font> <font color='#979000'>true</font><font face='Lucida Console'>)</font> : value<font face='Lucida Console'>(</font>v<font face='Lucida Console'>)</font> <b>{</b> <b>}</b> <b>}</b>;
+
+<font color='#009900'>/// Annotation to mark enums as an arithmetic type
+</font><font color='#0000FF'>struct</font> <b><a name='arithmetic'></a>arithmetic</b> <b>{</b> <b>}</b>;
+
+<font color='#009900'>/** \rst
+    A call policy which places one or more guard variables (``Ts...``) around the function call.
+
+    For example, this definition:
+
+    .. code-block:: cpp
+
+        m.def("foo", foo, py::call_guard&lt;T&gt;());
+
+    is equivalent to the following pseudocode:
+
+    .. code-block:: cpp
+
+        m.def("foo", [](args...) {
+            T scope_guard;
+            return foo(args...); // forwarded arguments
+        });
+ \endrst */</font>
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font>... Ts<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> call_guard;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='call_guard'></a>call_guard</b><font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <b>{</b> <font color='#0000FF'>using</font> type <font color='#5555FF'>=</font> detail::void_type; <b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>struct</font> <b><a name='call_guard'></a>call_guard</b><font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font> <b>{</b>
+    <b><a name='static_assert'></a>static_assert</b><font face='Lucida Console'>(</font>std::is_default_constructible<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font>::value,
+                  "<font color='#CC0000'>The guard type must be default constructible</font>"<font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>using</font> type <font color='#5555FF'>=</font> T;
+<b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T, <font color='#0000FF'>typename</font>... Ts<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>struct</font> <b><a name='call_guard'></a>call_guard</b><font color='#5555FF'>&lt;</font>T, Ts...<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>struct</font> <b><a name='type'></a>type</b> <b>{</b>
+        T guard<b>{</b><b>}</b>; <font color='#009900'>// Compose multiple guard types with left-to-right default-constructor order
+</font>        <font color='#0000FF'>typename</font> call_guard<font color='#5555FF'>&lt;</font>Ts...<font color='#5555FF'>&gt;</font>::type next<b>{</b><b>}</b>;
+    <b>}</b>;
+<b>}</b>;
+
+<font color='#009900'>/// @} annotations
+</font>
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+<font color='#009900'>/* Forward declarations */</font>
+<font color='#0000FF'>enum</font> <b><a name='op_id'></a>op_id</b> : <font color='#0000FF'><u>int</u></font>;
+<font color='#0000FF'>enum</font> <b><a name='op_type'></a>op_type</b> : <font color='#0000FF'><u>int</u></font>;
+<font color='#0000FF'>struct</font> undefined_t;
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>op_id id, op_type ot, <font color='#0000FF'>typename</font> L <font color='#5555FF'>=</font> undefined_t, <font color='#0000FF'>typename</font> R <font color='#5555FF'>=</font> undefined_t<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> op_;
+<font color='#0000FF'>inline</font> <font color='#0000FF'><u>void</u></font> <b><a name='keep_alive_impl'></a>keep_alive_impl</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> Nurse, <font color='#0000FF'><u>size_t</u></font> Patient, function_call <font color='#5555FF'>&amp;</font>call, handle ret<font face='Lucida Console'>)</font>;
+
+<font color='#009900'>/// Internal data structure which holds metadata about a keyword argument
+</font><font color='#0000FF'>struct</font> <b><a name='argument_record'></a>argument_record</b> <b>{</b>
+    <font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>name;  <font color='#009900'>///&lt; Argument name
+</font>    <font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>descr; <font color='#009900'>///&lt; Human-readable version of the argument value
+</font>    handle value;      <font color='#009900'>///&lt; Associated Python object
+</font>    <font color='#0000FF'><u>bool</u></font> convert : <font color='#979000'>1</font>;  <font color='#009900'>///&lt; True if the argument is allowed to convert when loading
+</font>    <font color='#0000FF'><u>bool</u></font> none : <font color='#979000'>1</font>;     <font color='#009900'>///&lt; True if None is allowed when loading
+</font>
+    <b><a name='argument_record'></a>argument_record</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>name, <font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>descr, handle value, <font color='#0000FF'><u>bool</u></font> convert, <font color='#0000FF'><u>bool</u></font> none<font face='Lucida Console'>)</font>
+        : name<font face='Lucida Console'>(</font>name<font face='Lucida Console'>)</font>, descr<font face='Lucida Console'>(</font>descr<font face='Lucida Console'>)</font>, value<font face='Lucida Console'>(</font>value<font face='Lucida Console'>)</font>, convert<font face='Lucida Console'>(</font>convert<font face='Lucida Console'>)</font>, none<font face='Lucida Console'>(</font>none<font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Internal data structure which holds metadata about a bound function (signature, overloads, etc.)
+</font><font color='#0000FF'>struct</font> <b><a name='function_record'></a>function_record</b> <b>{</b>
+    <b><a name='function_record'></a>function_record</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>
+        : is_constructor<font face='Lucida Console'>(</font><font color='#979000'>false</font><font face='Lucida Console'>)</font>, is_new_style_constructor<font face='Lucida Console'>(</font><font color='#979000'>false</font><font face='Lucida Console'>)</font>, is_stateless<font face='Lucida Console'>(</font><font color='#979000'>false</font><font face='Lucida Console'>)</font>,
+          is_operator<font face='Lucida Console'>(</font><font color='#979000'>false</font><font face='Lucida Console'>)</font>, has_args<font face='Lucida Console'>(</font><font color='#979000'>false</font><font face='Lucida Console'>)</font>, has_kwargs<font face='Lucida Console'>(</font><font color='#979000'>false</font><font face='Lucida Console'>)</font>, is_method<font face='Lucida Console'>(</font><font color='#979000'>false</font><font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+
+    <font color='#009900'>/// Function name
+</font>    <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>name <font color='#5555FF'>=</font> nullptr; <font color='#009900'>/* why no C++ strings? They generate heavier code.. */</font>
+
+    <font color='#009900'>// User-specified documentation string
+</font>    <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>doc <font color='#5555FF'>=</font> nullptr;
+
+    <font color='#009900'>/// Human-readable version of the function signature
+</font>    <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>signature <font color='#5555FF'>=</font> nullptr;
+
+    <font color='#009900'>/// List of registered keyword arguments
+</font>    std::vector<font color='#5555FF'>&lt;</font>argument_record<font color='#5555FF'>&gt;</font> args;
+
+    <font color='#009900'>/// Pointer to lambda function which converts arguments and performs the actual call
+</font>    <b><a name='handle'></a>handle</b> <font face='Lucida Console'>(</font><font color='#5555FF'>*</font>impl<font face='Lucida Console'>)</font> <font face='Lucida Console'>(</font>function_call <font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> nullptr;
+
+    <font color='#009900'>/// Storage for the wrapped function pointer and captured data, if any
+</font>    <font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font>data[<font color='#979000'>3</font>] <font color='#5555FF'>=</font> <b>{</b> <b>}</b>;
+
+    <font color='#009900'>/// Pointer to custom destructor for 'data' (if needed)
+</font>    <font color='#0000FF'><u>void</u></font> <font face='Lucida Console'>(</font><font color='#5555FF'>*</font>free_data<font face='Lucida Console'>)</font> <font face='Lucida Console'>(</font>function_record <font color='#5555FF'>*</font>ptr<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> nullptr;
+
+    <font color='#009900'>/// Return value policy associated with this function
+</font>    return_value_policy policy <font color='#5555FF'>=</font> return_value_policy::automatic;
+
+    <font color='#009900'>/// True if name == '__init__'
+</font>    <font color='#0000FF'><u>bool</u></font> is_constructor : <font color='#979000'>1</font>;
+
+    <font color='#009900'>/// True if this is a new-style `__init__` defined in `detail/init.h`
+</font>    <font color='#0000FF'><u>bool</u></font> is_new_style_constructor : <font color='#979000'>1</font>;
+
+    <font color='#009900'>/// True if this is a stateless function pointer
+</font>    <font color='#0000FF'><u>bool</u></font> is_stateless : <font color='#979000'>1</font>;
+
+    <font color='#009900'>/// True if this is an operator (__add__), etc.
+</font>    <font color='#0000FF'><u>bool</u></font> is_operator : <font color='#979000'>1</font>;
+
+    <font color='#009900'>/// True if the function has a '*args' argument
+</font>    <font color='#0000FF'><u>bool</u></font> has_args : <font color='#979000'>1</font>;
+
+    <font color='#009900'>/// True if the function has a '**kwargs' argument
+</font>    <font color='#0000FF'><u>bool</u></font> has_kwargs : <font color='#979000'>1</font>;
+
+    <font color='#009900'>/// True if this is a method
+</font>    <font color='#0000FF'><u>bool</u></font> is_method : <font color='#979000'>1</font>;
+
+    <font color='#009900'>/// Number of arguments (including py::args and/or py::kwargs, if present)
+</font>    std::uint16_t nargs;
+
+    <font color='#009900'>/// Python method object
+</font>    PyMethodDef <font color='#5555FF'>*</font>def <font color='#5555FF'>=</font> nullptr;
+
+    <font color='#009900'>/// Python handle to the parent scope (a class or a module)
+</font>    handle scope;
+
+    <font color='#009900'>/// Python handle to the sibling function representing an overload chain
+</font>    handle sibling;
+
+    <font color='#009900'>/// Pointer to next overload
+</font>    function_record <font color='#5555FF'>*</font>next <font color='#5555FF'>=</font> nullptr;
+<b>}</b>;
+
+<font color='#009900'>/// Special data structure which (temporarily) holds metadata about a bound class
+</font><font color='#0000FF'>struct</font> <b><a name='type_record'></a>type_record</b> <b>{</b>
+    PYBIND11_NOINLINE <b><a name='type_record'></a>type_record</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>
+        : multiple_inheritance<font face='Lucida Console'>(</font><font color='#979000'>false</font><font face='Lucida Console'>)</font>, dynamic_attr<font face='Lucida Console'>(</font><font color='#979000'>false</font><font face='Lucida Console'>)</font>, buffer_protocol<font face='Lucida Console'>(</font><font color='#979000'>false</font><font face='Lucida Console'>)</font>, module_local<font face='Lucida Console'>(</font><font color='#979000'>false</font><font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+
+    <font color='#009900'>/// Handle to the parent scope
+</font>    handle scope;
+
+    <font color='#009900'>/// Name of the class
+</font>    <font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>name <font color='#5555FF'>=</font> nullptr;
+
+    <font color='#009900'>// Pointer to RTTI type_info data structure
+</font>    <font color='#0000FF'>const</font> std::type_info <font color='#5555FF'>*</font>type <font color='#5555FF'>=</font> nullptr;
+
+    <font color='#009900'>/// How large is the underlying C++ type?
+</font>    <font color='#0000FF'><u>size_t</u></font> type_size <font color='#5555FF'>=</font> <font color='#979000'>0</font>;
+
+    <font color='#009900'>/// How large is the type's holder?
+</font>    <font color='#0000FF'><u>size_t</u></font> holder_size <font color='#5555FF'>=</font> <font color='#979000'>0</font>;
+
+    <font color='#009900'>/// The global operator new can be overridden with a class-specific variant
+</font>    <font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font><font face='Lucida Console'>(</font><font color='#5555FF'>*</font>operator_new<font face='Lucida Console'>)</font><font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> ::<b><a name='operator'></a>operator</b> <font color='#0000FF'>new</font>;
+
+    <font color='#009900'>/// Function pointer to class_&lt;..&gt;::init_instance
+</font>    <font color='#0000FF'><u>void</u></font> <font face='Lucida Console'>(</font><font color='#5555FF'>*</font>init_instance<font face='Lucida Console'>)</font><font face='Lucida Console'>(</font>instance <font color='#5555FF'>*</font>, <font color='#0000FF'>const</font> <font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> nullptr;
+
+    <font color='#009900'>/// Function pointer to class_&lt;..&gt;::dealloc
+</font>    <font color='#0000FF'><u>void</u></font> <font face='Lucida Console'>(</font><font color='#5555FF'>*</font>dealloc<font face='Lucida Console'>)</font><font face='Lucida Console'>(</font>detail::value_and_holder <font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> nullptr;
+
+    <font color='#009900'>/// List of base classes of the newly created type
+</font>    list bases;
+
+    <font color='#009900'>/// Optional docstring
+</font>    <font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>doc <font color='#5555FF'>=</font> nullptr;
+
+    <font color='#009900'>/// Custom metaclass (optional)
+</font>    handle metaclass;
+
+    <font color='#009900'>/// Multiple inheritance marker
+</font>    <font color='#0000FF'><u>bool</u></font> multiple_inheritance : <font color='#979000'>1</font>;
+
+    <font color='#009900'>/// Does the class manage a __dict__?
+</font>    <font color='#0000FF'><u>bool</u></font> dynamic_attr : <font color='#979000'>1</font>;
+
+    <font color='#009900'>/// Does the class implement the buffer protocol?
+</font>    <font color='#0000FF'><u>bool</u></font> buffer_protocol : <font color='#979000'>1</font>;
+
+    <font color='#009900'>/// Is the default (unique_ptr) holder type used?
+</font>    <font color='#0000FF'><u>bool</u></font> default_holder : <font color='#979000'>1</font>;
+
+    <font color='#009900'>/// Is the class definition local to the module shared object?
+</font>    <font color='#0000FF'><u>bool</u></font> module_local : <font color='#979000'>1</font>;
+
+    PYBIND11_NOINLINE <font color='#0000FF'><u>void</u></font> <b><a name='add_base'></a>add_base</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> std::type_info <font color='#5555FF'>&amp;</font>base, <font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font><font face='Lucida Console'>(</font><font color='#5555FF'>*</font>caster<font face='Lucida Console'>)</font><font face='Lucida Console'>(</font><font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>auto</font> base_info <font color='#5555FF'>=</font> detail::<font color='#BB00BB'>get_type_info</font><font face='Lucida Console'>(</font>base, <font color='#979000'>false</font><font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>base_info<font face='Lucida Console'>)</font> <b>{</b>
+            std::string <font color='#BB00BB'>tname</font><font face='Lucida Console'>(</font>base.<font color='#BB00BB'>name</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            detail::<font color='#BB00BB'>clean_type_id</font><font face='Lucida Console'>(</font>tname<font face='Lucida Console'>)</font>;
+            <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>generic_type: type \"</font>" <font color='#5555FF'>+</font> std::<font color='#BB00BB'>string</font><font face='Lucida Console'>(</font>name<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font>
+                          "<font color='#CC0000'>\" referenced unknown base type \"</font>" <font color='#5555FF'>+</font> tname <font color='#5555FF'>+</font> "<font color='#CC0000'>\"</font>"<font face='Lucida Console'>)</font>;
+        <b>}</b>
+
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>default_holder <font color='#5555FF'>!</font><font color='#5555FF'>=</font> base_info<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>default_holder<font face='Lucida Console'>)</font> <b>{</b>
+            std::string <font color='#BB00BB'>tname</font><font face='Lucida Console'>(</font>base.<font color='#BB00BB'>name</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            detail::<font color='#BB00BB'>clean_type_id</font><font face='Lucida Console'>(</font>tname<font face='Lucida Console'>)</font>;
+            <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>generic_type: type \"</font>" <font color='#5555FF'>+</font> std::<font color='#BB00BB'>string</font><font face='Lucida Console'>(</font>name<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> "<font color='#CC0000'>\" </font>" <font color='#5555FF'>+</font>
+                    <font face='Lucida Console'>(</font>default_holder ? "<font color='#CC0000'>does not have</font>" : "<font color='#CC0000'>has</font>"<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font>
+                    "<font color='#CC0000'> a non-default holder type while its base \"</font>" <font color='#5555FF'>+</font> tname <font color='#5555FF'>+</font> "<font color='#CC0000'>\" </font>" <font color='#5555FF'>+</font>
+                    <font face='Lucida Console'>(</font>base_info<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>default_holder ? "<font color='#CC0000'>does not</font>" : "<font color='#CC0000'>does</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <b>}</b>
+
+        bases.<font color='#BB00BB'>append</font><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> base_info<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>type<font face='Lucida Console'>)</font>;
+
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>base_info<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_dictoffset <font color='#5555FF'>!</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+            dynamic_attr <font color='#5555FF'>=</font> <font color='#979000'>true</font>;
+
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>caster<font face='Lucida Console'>)</font>
+            base_info<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>implicit_casts.<font color='#BB00BB'>emplace_back</font><font face='Lucida Console'>(</font>type, caster<font face='Lucida Console'>)</font>;
+    <b>}</b>
+<b>}</b>;
+
+<font color='#0000FF'>inline</font> function_call::<b><a name='function_call'></a>function_call</b><font face='Lucida Console'>(</font>function_record <font color='#5555FF'>&amp;</font>f, handle p<font face='Lucida Console'>)</font> :
+        func<font face='Lucida Console'>(</font>f<font face='Lucida Console'>)</font>, parent<font face='Lucida Console'>(</font>p<font face='Lucida Console'>)</font> <b>{</b>
+    args.<font color='#BB00BB'>reserve</font><font face='Lucida Console'>(</font>f.nargs<font face='Lucida Console'>)</font>;
+    args_convert.<font color='#BB00BB'>reserve</font><font face='Lucida Console'>(</font>f.nargs<font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#009900'>/// Tag for a new-style `__init__` defined in `detail/init.h`
+</font><font color='#0000FF'>struct</font> <b><a name='is_new_style_constructor'></a>is_new_style_constructor</b> <b>{</b> <b>}</b>;
+
+<font color='#009900'>/**
+ * Partial template specializations to process custom attributes provided to
+ * cpp_function_ and class_. These are either used to initialize the respective
+ * fields in the type_record and function_record data structures or executed at
+ * runtime to deal with custom call policies (e.g. keep_alive).
+ */</font>
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T, <font color='#0000FF'>typename</font> SFINAE <font color='#5555FF'>=</font> <font color='#0000FF'><u>void</u></font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> process_attribute;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attribute_default'></a>process_attribute_default</b> <b>{</b>
+    <font color='#009900'>/// Default implementation: do nothing
+</font>    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> T <font color='#5555FF'>&amp;</font>, function_record <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> T <font color='#5555FF'>&amp;</font>, type_record <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='precall'></a>precall</b><font face='Lucida Console'>(</font>function_call <font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='postcall'></a>postcall</b><font face='Lucida Console'>(</font>function_call <font color='#5555FF'>&amp;</font>, handle<font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Process an attribute specifying the function's name
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>name<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>name<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> name <font color='#5555FF'>&amp;</font>n, function_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>name <font color='#5555FF'>=</font> <font color='#0000FF'>const_cast</font><font color='#5555FF'>&lt;</font><font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>n.value<font face='Lucida Console'>)</font>; <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Process an attribute specifying the function's docstring
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>doc<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>doc<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> doc <font color='#5555FF'>&amp;</font>n, function_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>doc <font color='#5555FF'>=</font> <font color='#0000FF'>const_cast</font><font color='#5555FF'>&lt;</font><font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>n.value<font face='Lucida Console'>)</font>; <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Process an attribute specifying the function's docstring (provided as a C-style string)
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font><font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font><font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>d, function_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>doc <font color='#5555FF'>=</font> <font color='#0000FF'>const_cast</font><font color='#5555FF'>&lt;</font><font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>d<font face='Lucida Console'>)</font>; <b>}</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>d, type_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>doc <font color='#5555FF'>=</font> <font color='#0000FF'>const_cast</font><font color='#5555FF'>&lt;</font><font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>d<font face='Lucida Console'>)</font>; <b>}</b>
+<b>}</b>;
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font><font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font> : process_attribute<font color='#5555FF'>&lt;</font><font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font> <b>{</b> <b>}</b>;
+
+<font color='#009900'>/// Process an attribute indicating the function's return value policy
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>return_value_policy<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>return_value_policy<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> return_value_policy <font color='#5555FF'>&amp;</font>p, function_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>policy <font color='#5555FF'>=</font> p; <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Process an attribute which indicates that this is an overloaded function associated with a given sibling
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>sibling<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>sibling<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> sibling <font color='#5555FF'>&amp;</font>s, function_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>sibling <font color='#5555FF'>=</font> s.value; <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Process an attribute which indicates that this function is a method
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>is_method<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>is_method<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> is_method <font color='#5555FF'>&amp;</font>s, function_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>is_method <font color='#5555FF'>=</font> <font color='#979000'>true</font>; r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>scope <font color='#5555FF'>=</font> s.class_; <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Process an attribute which indicates the parent scope of a method
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>scope<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>scope<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> scope <font color='#5555FF'>&amp;</font>s, function_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>scope <font color='#5555FF'>=</font> s.value; <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Process an attribute which indicates that this function is an operator
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>is_operator<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>is_operator<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> is_operator <font color='#5555FF'>&amp;</font>, function_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>is_operator <font color='#5555FF'>=</font> <font color='#979000'>true</font>; <b>}</b>
+<b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>is_new_style_constructor<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>is_new_style_constructor<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> is_new_style_constructor <font color='#5555FF'>&amp;</font>, function_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>is_new_style_constructor <font color='#5555FF'>=</font> <font color='#979000'>true</font>; <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Process a keyword argument attribute (*without* a default value)
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>arg<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>arg<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> arg <font color='#5555FF'>&amp;</font>a, function_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>is_method <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>args.<font color='#BB00BB'>empty</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>args.<font color='#BB00BB'>emplace_back</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>self</font>", nullptr, <font color='#BB00BB'>handle</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, <font color='#979000'>true</font> <font color='#009900'>/*convert*/</font>, <font color='#979000'>false</font> <font color='#009900'>/*none not allowed*/</font><font face='Lucida Console'>)</font>;
+        r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>args.<font color='#BB00BB'>emplace_back</font><font face='Lucida Console'>(</font>a.name, nullptr, <font color='#BB00BB'>handle</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, <font color='#5555FF'>!</font>a.flag_noconvert, a.flag_none<font face='Lucida Console'>)</font>;
+    <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Process a keyword argument attribute (*with* a default value)
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>arg_v<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>arg_v<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> arg_v <font color='#5555FF'>&amp;</font>a, function_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>is_method <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>args.<font color='#BB00BB'>empty</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>args.<font color='#BB00BB'>emplace_back</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>self</font>", nullptr <font color='#009900'>/*descr*/</font>, <font color='#BB00BB'>handle</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#009900'>/*parent*/</font>, <font color='#979000'>true</font> <font color='#009900'>/*convert*/</font>, <font color='#979000'>false</font> <font color='#009900'>/*none not allowed*/</font><font face='Lucida Console'>)</font>;
+
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>a.value<font face='Lucida Console'>)</font> <b>{</b>
+<font color='#0000FF'>#if</font> <font color='#5555FF'>!</font>defined<font face='Lucida Console'>(</font>NDEBUG<font face='Lucida Console'>)</font>
+            std::string <font color='#BB00BB'>descr</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>'</font>"<font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>a.name<font face='Lucida Console'>)</font> descr <font color='#5555FF'>+</font><font color='#5555FF'>=</font> std::<font color='#BB00BB'>string</font><font face='Lucida Console'>(</font>a.name<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> "<font color='#CC0000'>: </font>";
+            descr <font color='#5555FF'>+</font><font color='#5555FF'>=</font> a.type <font color='#5555FF'>+</font> "<font color='#CC0000'>'</font>";
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>is_method<font face='Lucida Console'>)</font> <b>{</b>
+                <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>name<font face='Lucida Console'>)</font>
+                    descr <font color='#5555FF'>+</font><font color='#5555FF'>=</font> "<font color='#CC0000'> in method '</font>" <font color='#5555FF'>+</font> <font face='Lucida Console'>(</font>std::string<font face='Lucida Console'>)</font> <font color='#BB00BB'>str</font><font face='Lucida Console'>(</font>r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>scope<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> "<font color='#CC0000'>.</font>" <font color='#5555FF'>+</font> <font face='Lucida Console'>(</font>std::string<font face='Lucida Console'>)</font> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>name <font color='#5555FF'>+</font> "<font color='#CC0000'>'</font>";
+                <font color='#0000FF'>else</font>
+                    descr <font color='#5555FF'>+</font><font color='#5555FF'>=</font> "<font color='#CC0000'> in method of '</font>" <font color='#5555FF'>+</font> <font face='Lucida Console'>(</font>std::string<font face='Lucida Console'>)</font> <font color='#BB00BB'>str</font><font face='Lucida Console'>(</font>r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>scope<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> "<font color='#CC0000'>'</font>";
+            <b>}</b> <font color='#0000FF'>else</font> <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>name<font face='Lucida Console'>)</font> <b>{</b>
+                descr <font color='#5555FF'>+</font><font color='#5555FF'>=</font> "<font color='#CC0000'> in function '</font>" <font color='#5555FF'>+</font> <font face='Lucida Console'>(</font>std::string<font face='Lucida Console'>)</font> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>name <font color='#5555FF'>+</font> "<font color='#CC0000'>'</font>";
+            <b>}</b>
+            <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>arg(): could not convert default argument </font>"
+                          <font color='#5555FF'>+</font> descr <font color='#5555FF'>+</font> "<font color='#CC0000'> into a Python object (type not registered yet?)</font>"<font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#else</font>
+            <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>arg(): could not convert default argument </font>"
+                          "<font color='#CC0000'>into a Python object (type not registered yet?). </font>"
+                          "<font color='#CC0000'>Compile in debug mode for more information.</font>"<font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#endif</font>
+        <b>}</b>
+        r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>args.<font color='#BB00BB'>emplace_back</font><font face='Lucida Console'>(</font>a.name, a.descr, a.value.<font color='#BB00BB'>inc_ref</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, <font color='#5555FF'>!</font>a.flag_noconvert, a.flag_none<font face='Lucida Console'>)</font>;
+    <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Process a parent class attribute.  Single inheritance only (class_ itself already guarantees that)
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>T, enable_if_t<font color='#5555FF'>&lt;</font>is_pyobject<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font>::value<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>handle<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> handle <font color='#5555FF'>&amp;</font>h, type_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>bases.<font color='#BB00BB'>append</font><font face='Lucida Console'>(</font>h<font face='Lucida Console'>)</font>; <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Process a parent class attribute (deprecated, does not support multiple inheritance)
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>base<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>base<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> base<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font> <font color='#5555FF'>&amp;</font>, type_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font><font color='#BB00BB'>add_base</font><font face='Lucida Console'>(</font><font color='#0000FF'>typeid</font><font face='Lucida Console'>(</font>T<font face='Lucida Console'>)</font>, nullptr<font face='Lucida Console'>)</font>; <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Process a multiple inheritance attribute
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>multiple_inheritance<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>multiple_inheritance<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> multiple_inheritance <font color='#5555FF'>&amp;</font>, type_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>multiple_inheritance <font color='#5555FF'>=</font> <font color='#979000'>true</font>; <b>}</b>
+<b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>dynamic_attr<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>dynamic_attr<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> dynamic_attr <font color='#5555FF'>&amp;</font>, type_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>dynamic_attr <font color='#5555FF'>=</font> <font color='#979000'>true</font>; <b>}</b>
+<b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>buffer_protocol<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>buffer_protocol<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> buffer_protocol <font color='#5555FF'>&amp;</font>, type_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>buffer_protocol <font color='#5555FF'>=</font> <font color='#979000'>true</font>; <b>}</b>
+<b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>metaclass<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>metaclass<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> metaclass <font color='#5555FF'>&amp;</font>m, type_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>metaclass <font color='#5555FF'>=</font> m.value; <b>}</b>
+<b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>module_local<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>module_local<font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> module_local <font color='#5555FF'>&amp;</font>l, type_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b> r<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>module_local <font color='#5555FF'>=</font> l.value; <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Process an 'arithmetic' attribute for enums (does nothing here)
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>arithmetic<font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>arithmetic<font color='#5555FF'>&gt;</font> <b>{</b><b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font>... Ts<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>call_guard<font color='#5555FF'>&lt;</font>Ts...<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> : process_attribute_default<font color='#5555FF'>&lt;</font>call_guard<font color='#5555FF'>&lt;</font>Ts...<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> <b>{</b> <b>}</b>;
+
+<font color='#009900'>/**
+ * Process a keep_alive call policy -- invokes keep_alive_impl during the
+ * pre-call handler if both Nurse, Patient != 0 and use the post-call handler
+ * otherwise
+ */</font>
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font> Nurse, <font color='#0000FF'><u>size_t</u></font> Patient<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attribute'></a>process_attribute</b><font color='#5555FF'>&lt;</font>keep_alive<font color='#5555FF'>&lt;</font>Nurse, Patient<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> : <font color='#0000FF'>public</font> process_attribute_default<font color='#5555FF'>&lt;</font>keep_alive<font color='#5555FF'>&lt;</font>Nurse, Patient<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font> N <font color='#5555FF'>=</font> Nurse, <font color='#0000FF'><u>size_t</u></font> P <font color='#5555FF'>=</font> Patient, enable_if_t<font color='#5555FF'>&lt;</font>N <font color='#5555FF'>!</font><font color='#5555FF'>=</font> <font color='#979000'>0</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> P <font color='#5555FF'>!</font><font color='#5555FF'>=</font> <font color='#979000'>0</font>, <font color='#0000FF'><u>int</u></font><font color='#5555FF'>&gt;</font> <font color='#5555FF'>=</font> <font color='#979000'>0</font><font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='precall'></a>precall</b><font face='Lucida Console'>(</font>function_call <font color='#5555FF'>&amp;</font>call<font face='Lucida Console'>)</font> <b>{</b> <font color='#BB00BB'>keep_alive_impl</font><font face='Lucida Console'>(</font>Nurse, Patient, call, <font color='#BB00BB'>handle</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <b>}</b>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font> N <font color='#5555FF'>=</font> Nurse, <font color='#0000FF'><u>size_t</u></font> P <font color='#5555FF'>=</font> Patient, enable_if_t<font color='#5555FF'>&lt;</font>N <font color='#5555FF'>!</font><font color='#5555FF'>=</font> <font color='#979000'>0</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> P <font color='#5555FF'>!</font><font color='#5555FF'>=</font> <font color='#979000'>0</font>, <font color='#0000FF'><u>int</u></font><font color='#5555FF'>&gt;</font> <font color='#5555FF'>=</font> <font color='#979000'>0</font><font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='postcall'></a>postcall</b><font face='Lucida Console'>(</font>function_call <font color='#5555FF'>&amp;</font>, handle<font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font> N <font color='#5555FF'>=</font> Nurse, <font color='#0000FF'><u>size_t</u></font> P <font color='#5555FF'>=</font> Patient, enable_if_t<font color='#5555FF'>&lt;</font>N <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font> <font color='#5555FF'>|</font><font color='#5555FF'>|</font> P <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font>, <font color='#0000FF'><u>int</u></font><font color='#5555FF'>&gt;</font> <font color='#5555FF'>=</font> <font color='#979000'>0</font><font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='precall'></a>precall</b><font face='Lucida Console'>(</font>function_call <font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font> N <font color='#5555FF'>=</font> Nurse, <font color='#0000FF'><u>size_t</u></font> P <font color='#5555FF'>=</font> Patient, enable_if_t<font color='#5555FF'>&lt;</font>N <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font> <font color='#5555FF'>|</font><font color='#5555FF'>|</font> P <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font>, <font color='#0000FF'><u>int</u></font><font color='#5555FF'>&gt;</font> <font color='#5555FF'>=</font> <font color='#979000'>0</font><font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='postcall'></a>postcall</b><font face='Lucida Console'>(</font>function_call <font color='#5555FF'>&amp;</font>call, handle ret<font face='Lucida Console'>)</font> <b>{</b> <font color='#BB00BB'>keep_alive_impl</font><font face='Lucida Console'>(</font>Nurse, Patient, call, ret<font face='Lucida Console'>)</font>; <b>}</b>
+<b>}</b>;
+
+<font color='#009900'>/// Recursively iterate over variadic template arguments
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font>... Args<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='process_attributes'></a>process_attributes</b> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> Args<font color='#5555FF'>&amp;</font>... args, function_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'><u>int</u></font> unused[] <font color='#5555FF'>=</font> <b>{</b> <font color='#979000'>0</font>, <font face='Lucida Console'>(</font>process_attribute<font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> std::decay<font color='#5555FF'>&lt;</font>Args<font color='#5555FF'>&gt;</font>::type<font color='#5555FF'>&gt;</font>::<font color='#BB00BB'>init</font><font face='Lucida Console'>(</font>args, r<font face='Lucida Console'>)</font>, <font color='#979000'>0</font><font face='Lucida Console'>)</font> ... <b>}</b>;
+        <font color='#BB00BB'>ignore_unused</font><font face='Lucida Console'>(</font>unused<font face='Lucida Console'>)</font>;
+    <b>}</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='init'></a>init</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> Args<font color='#5555FF'>&amp;</font>... args, type_record <font color='#5555FF'>*</font>r<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'><u>int</u></font> unused[] <font color='#5555FF'>=</font> <b>{</b> <font color='#979000'>0</font>, <font face='Lucida Console'>(</font>process_attribute<font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> std::decay<font color='#5555FF'>&lt;</font>Args<font color='#5555FF'>&gt;</font>::type<font color='#5555FF'>&gt;</font>::<font color='#BB00BB'>init</font><font face='Lucida Console'>(</font>args, r<font face='Lucida Console'>)</font>, <font color='#979000'>0</font><font face='Lucida Console'>)</font> ... <b>}</b>;
+        <font color='#BB00BB'>ignore_unused</font><font face='Lucida Console'>(</font>unused<font face='Lucida Console'>)</font>;
+    <b>}</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='precall'></a>precall</b><font face='Lucida Console'>(</font>function_call <font color='#5555FF'>&amp;</font>call<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'><u>int</u></font> unused[] <font color='#5555FF'>=</font> <b>{</b> <font color='#979000'>0</font>, <font face='Lucida Console'>(</font>process_attribute<font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> std::decay<font color='#5555FF'>&lt;</font>Args<font color='#5555FF'>&gt;</font>::type<font color='#5555FF'>&gt;</font>::<font color='#BB00BB'>precall</font><font face='Lucida Console'>(</font>call<font face='Lucida Console'>)</font>, <font color='#979000'>0</font><font face='Lucida Console'>)</font> ... <b>}</b>;
+        <font color='#BB00BB'>ignore_unused</font><font face='Lucida Console'>(</font>unused<font face='Lucida Console'>)</font>;
+    <b>}</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>void</u></font> <b><a name='postcall'></a>postcall</b><font face='Lucida Console'>(</font>function_call <font color='#5555FF'>&amp;</font>call, handle fn_ret<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'><u>int</u></font> unused[] <font color='#5555FF'>=</font> <b>{</b> <font color='#979000'>0</font>, <font face='Lucida Console'>(</font>process_attribute<font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> std::decay<font color='#5555FF'>&lt;</font>Args<font color='#5555FF'>&gt;</font>::type<font color='#5555FF'>&gt;</font>::<font color='#BB00BB'>postcall</font><font face='Lucida Console'>(</font>call, fn_ret<font face='Lucida Console'>)</font>, <font color='#979000'>0</font><font face='Lucida Console'>)</font> ... <b>}</b>;
+        <font color='#BB00BB'>ignore_unused</font><font face='Lucida Console'>(</font>unused<font face='Lucida Console'>)</font>;
+    <b>}</b>
+<b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>using</font> is_call_guard <font color='#5555FF'>=</font> is_instantiation<font color='#5555FF'>&lt;</font>call_guard, T<font color='#5555FF'>&gt;</font>;
+
+<font color='#009900'>/// Extract the ``type`` from the first `call_guard` in `Extras...` (or `void_type` if none found)
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font>... Extra<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>using</font> extract_guard_t <font color='#5555FF'>=</font> <font color='#0000FF'>typename</font> exactly_one_t<font color='#5555FF'>&lt;</font>is_call_guard, call_guard<font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font>, Extra...<font color='#5555FF'>&gt;</font>::type;
+
+<font color='#009900'>/// Check the number of named arguments at compile time
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font>... Extra,
+          <font color='#0000FF'><u>size_t</u></font> named <font color='#5555FF'>=</font> <b><a name='constexpr_sum'></a>constexpr_sum</b><font face='Lucida Console'>(</font>std::is_base_of<font color='#5555FF'>&lt;</font>arg, Extra<font color='#5555FF'>&gt;</font>::value...<font face='Lucida Console'>)</font>,
+          <font color='#0000FF'><u>size_t</u></font> self  <font color='#5555FF'>=</font> <b><a name='constexpr_sum'></a>constexpr_sum</b><font face='Lucida Console'>(</font>std::is_same<font color='#5555FF'>&lt;</font>is_method, Extra<font color='#5555FF'>&gt;</font>::value...<font face='Lucida Console'>)</font><font color='#5555FF'>&gt;</font>
+constexpr <font color='#0000FF'><u>bool</u></font> <b><a name='expected_num_args'></a>expected_num_args</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> nargs, <font color='#0000FF'><u>bool</u></font> has_args, <font color='#0000FF'><u>bool</u></font> has_kwargs<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>return</font> named <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font> <font color='#5555FF'>|</font><font color='#5555FF'>|</font> <font face='Lucida Console'>(</font>self <font color='#5555FF'>+</font> named <font color='#5555FF'>+</font> has_args <font color='#5555FF'>+</font> has_kwargs<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> nargs;
+<b>}</b>
+
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+
+</pre></body></html>

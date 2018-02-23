@@ -1,0 +1,180 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - simd_check.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>// Copyright (C) 2013  Davis E. King (davis@dlib.net)
+</font><font color='#009900'>// License: Boost Software License   See LICENSE.txt for the full license.
+</font><font color='#0000FF'>#ifndef</font> DLIB_SIMd_CHECK_Hh_
+<font color='#0000FF'>#define</font> DLIB_SIMd_CHECK_Hh_
+
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>array<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>iostream<font color='#5555FF'>&gt;</font>
+
+<font color='#009900'>//#define DLIB_DO_NOT_USE_SIMD
+</font>
+<font color='#009900'>// figure out which SIMD instructions we can use.
+</font><font color='#0000FF'>#ifndef</font> DLIB_DO_NOT_USE_SIMD
+    <font color='#0000FF'>#if</font> defined<font face='Lucida Console'>(</font>_MSC_VER<font face='Lucida Console'>)</font> 
+        <font color='#0000FF'>#ifdef</font> __AVX__
+            <font color='#0000FF'>#ifndef</font> DLIB_HAVE_SSE2
+                <font color='#0000FF'>#define</font> DLIB_HAVE_SSE2
+            <font color='#0000FF'>#endif</font> 
+            <font color='#0000FF'>#ifndef</font> DLIB_HAVE_SSE3
+                <font color='#0000FF'>#define</font> DLIB_HAVE_SSE3
+            <font color='#0000FF'>#endif</font>
+            <font color='#0000FF'>#ifndef</font> DLIB_HAVE_SSE41
+                <font color='#0000FF'>#define</font> DLIB_HAVE_SSE41
+            <font color='#0000FF'>#endif</font>
+            <font color='#0000FF'>#ifndef</font> DLIB_HAVE_AVX
+                <font color='#0000FF'>#define</font> DLIB_HAVE_AVX
+            <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#if</font> <font face='Lucida Console'>(</font>defined<font face='Lucida Console'>(</font> _M_X64<font face='Lucida Console'>)</font> <font color='#5555FF'>|</font><font color='#5555FF'>|</font> defined<font face='Lucida Console'>(</font>_M_IX86_FP<font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> _M_IX86_FP <font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font> <font color='#979000'>2</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font color='#5555FF'>!</font>defined<font face='Lucida Console'>(</font>DLIB_HAVE_SSE2<font face='Lucida Console'>)</font>
+            <font color='#0000FF'>#define</font> DLIB_HAVE_SSE2
+        <font color='#0000FF'>#endif</font>
+    <font color='#0000FF'>#else</font>
+        <font color='#0000FF'>#ifdef</font> __SSE2__
+            <font color='#0000FF'>#ifndef</font> DLIB_HAVE_SSE2
+                <font color='#0000FF'>#define</font> DLIB_HAVE_SSE2
+            <font color='#0000FF'>#endif</font> 
+        <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#ifdef</font> __SSSE3__
+            <font color='#0000FF'>#ifndef</font> DLIB_HAVE_SSE3
+                <font color='#0000FF'>#define</font> DLIB_HAVE_SSE3
+            <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#ifdef</font> __SSE4_1__
+            <font color='#0000FF'>#ifndef</font> DLIB_HAVE_SSE41
+                <font color='#0000FF'>#define</font> DLIB_HAVE_SSE41
+            <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#ifdef</font> __AVX__
+            <font color='#0000FF'>#ifndef</font> DLIB_HAVE_AVX
+                <font color='#0000FF'>#define</font> DLIB_HAVE_AVX
+            <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#ifdef</font> __AVX2__
+            <font color='#0000FF'>#ifndef</font> DLIB_HAVE_AVX2
+                <font color='#0000FF'>#define</font> DLIB_HAVE_AVX2
+            <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#ifdef</font> __ALTIVEC__
+            <font color='#0000FF'>#ifndef</font> DLIB_HAVE_ALTIVEC
+                <font color='#0000FF'>#define</font> DLIB_HAVE_ALTIVEC
+            <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#ifdef</font> __VSX__
+            <font color='#0000FF'>#ifndef</font> DLIB_HAVE_VSX
+                <font color='#0000FF'>#define</font> DLIB_HAVE_VSX
+            <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#ifdef</font> __VEC__ <font color='#009900'>// __VEC__ = 10206
+</font>            <font color='#0000FF'>#ifndef</font> DLIB_HAVE_POWER_VEC	<font color='#009900'>// vector and vec_ intrinsics
+</font>                <font color='#0000FF'>#define</font> DLIB_HAVE_POWER_VEC
+            <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#ifdef</font> __ARM_NEON
+            <font color='#0000FF'>#ifndef</font> DLIB_HAVE_NEON
+                <font color='#0000FF'>#define</font> DLIB_HAVE_NEON
+            <font color='#0000FF'>#endif</font>
+        <font color='#0000FF'>#endif</font>
+    <font color='#0000FF'>#endif</font>
+<font color='#0000FF'>#endif</font>
+
+ 
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+
+<font color='#0000FF'>#ifdef</font> DLIB_HAVE_ALTIVEC
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>altivec.h<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#endif</font>
+
+<font color='#0000FF'>#ifdef</font> DLIB_HAVE_SSE2
+    <font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>xmmintrin.h<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>emmintrin.h<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>mmintrin.h<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#endif</font>
+<font color='#0000FF'>#ifdef</font> DLIB_HAVE_SSE3
+    <font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>pmmintrin.h<font color='#5555FF'>&gt;</font> <font color='#009900'>// SSE3
+</font>    <font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>tmmintrin.h<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#endif</font>
+<font color='#0000FF'>#ifdef</font> DLIB_HAVE_SSE41
+    <font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>smmintrin.h<font color='#5555FF'>&gt;</font> <font color='#009900'>// SSE4
+</font><font color='#0000FF'>#endif</font>
+<font color='#0000FF'>#ifdef</font> DLIB_HAVE_AVX
+    <font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>immintrin.h<font color='#5555FF'>&gt;</font> <font color='#009900'>// AVX
+</font><font color='#0000FF'>#endif</font>
+<font color='#0000FF'>#ifdef</font> DLIB_HAVE_AVX2
+    <font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>immintrin.h<font color='#5555FF'>&gt;</font> <font color='#009900'>// AVX
+</font><font color='#009900'>//    #include &lt;avx2intrin.h&gt;
+</font><font color='#0000FF'>#endif</font>
+<font color='#0000FF'>#ifdef</font> DLIB_HAVE_NEON
+    <font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>arm_neon.h<font color='#5555FF'>&gt;</font> <font color='#009900'>// ARM NEON
+</font><font color='#0000FF'>#endif</font>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font><font color='#009900'>// Define functions to check, at runtime, what instructions are available
+</font>
+<font color='#0000FF'>#if</font> defined<font face='Lucida Console'>(</font>_MSC_VER<font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font face='Lucida Console'>(</font>defined<font face='Lucida Console'>(</font>_M_I86<font face='Lucida Console'>)</font> <font color='#5555FF'>|</font><font color='#5555FF'>|</font> defined<font face='Lucida Console'>(</font>_M_IX86<font face='Lucida Console'>)</font> <font color='#5555FF'>|</font><font color='#5555FF'>|</font> defined<font face='Lucida Console'>(</font>_M_X64<font face='Lucida Console'>)</font> <font color='#5555FF'>|</font><font color='#5555FF'>|</font> defined<font face='Lucida Console'>(</font>_M_AMD64<font face='Lucida Console'>)</font> <font face='Lucida Console'>)</font>
+    <font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>intrin.h<font color='#5555FF'>&gt;</font>
+
+    <font color='#0000FF'>inline</font> std::array<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>int</u></font>,<font color='#979000'>4</font><font color='#5555FF'>&gt;</font> <b><a name='cpuid'></a>cpuid</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>int</u></font> function_id<font face='Lucida Console'>)</font> 
+    <b>{</b> 
+        std::array<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>int</u></font>,<font color='#979000'>4</font><font color='#5555FF'>&gt;</font> info;
+        <font color='#009900'>// Load EAX, EBX, ECX, EDX into info
+</font>        <font color='#BB00BB'>__cpuid</font><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font><font color='#0000FF'><u>int</u></font><font color='#5555FF'>*</font><font face='Lucida Console'>)</font>info.<font color='#BB00BB'>data</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, function_id<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> info;
+    <b>}</b>
+
+<font color='#0000FF'>#elif</font> <font face='Lucida Console'>(</font>defined<font face='Lucida Console'>(</font>__GNUC__<font face='Lucida Console'>)</font> <font color='#5555FF'>|</font><font color='#5555FF'>|</font> defined<font face='Lucida Console'>(</font>__clang__<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font face='Lucida Console'>(</font>defined<font face='Lucida Console'>(</font>__i386__<font face='Lucida Console'>)</font> <font color='#5555FF'>|</font><font color='#5555FF'>|</font> defined<font face='Lucida Console'>(</font>__i686__<font face='Lucida Console'>)</font> <font color='#5555FF'>|</font><font color='#5555FF'>|</font> defined<font face='Lucida Console'>(</font>__amd64__<font face='Lucida Console'>)</font> <font color='#5555FF'>|</font><font color='#5555FF'>|</font> defined<font face='Lucida Console'>(</font>__x86_64__<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+    <font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>cpuid.h<font color='#5555FF'>&gt;</font>
+
+    <font color='#0000FF'>inline</font> std::array<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>int</u></font>,<font color='#979000'>4</font><font color='#5555FF'>&gt;</font> <b><a name='cpuid'></a>cpuid</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>int</u></font> function_id<font face='Lucida Console'>)</font> 
+    <b>{</b> 
+        std::array<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>int</u></font>,<font color='#979000'>4</font><font color='#5555FF'>&gt;</font> info;
+        <font color='#009900'>// Load EAX, EBX, ECX, EDX into info
+</font>        <font color='#BB00BB'>__cpuid</font><font face='Lucida Console'>(</font>function_id, info[<font color='#979000'>0</font>], info[<font color='#979000'>1</font>], info[<font color='#979000'>2</font>], info[<font color='#979000'>3</font>]<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> info;
+    <b>}</b>
+
+<font color='#0000FF'>#else</font>
+
+    <font color='#0000FF'>inline</font> std::array<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>int</u></font>,<font color='#979000'>4</font><font color='#5555FF'>&gt;</font> <b><a name='cpuid'></a>cpuid</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>int</u></font><font face='Lucida Console'>)</font> 
+    <b>{</b>
+        <font color='#0000FF'>return</font> std::array<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>int</u></font>,<font color='#979000'>4</font><font color='#5555FF'>&gt;</font><b>{</b><b>}</b>;
+    <b>}</b>
+
+<font color='#0000FF'>#endif</font>
+
+    <font color='#0000FF'>inline</font> <font color='#0000FF'><u>bool</u></font> <b><a name='cpu_has_sse2_instructions'></a>cpu_has_sse2_instructions</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>   <b>{</b> <font color='#0000FF'>return</font> <font color='#979000'>0</font><font color='#5555FF'>!</font><font color='#5555FF'>=</font><font face='Lucida Console'>(</font><font color='#BB00BB'>cpuid</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>[<font color='#979000'>3</font>]<font color='#5555FF'>&amp;</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font><font color='#979000'>26</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <b>}</b>
+    <font color='#0000FF'>inline</font> <font color='#0000FF'><u>bool</u></font> <b><a name='cpu_has_sse3_instructions'></a>cpu_has_sse3_instructions</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>   <b>{</b> <font color='#0000FF'>return</font> <font color='#979000'>0</font><font color='#5555FF'>!</font><font color='#5555FF'>=</font><font face='Lucida Console'>(</font><font color='#BB00BB'>cpuid</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>[<font color='#979000'>2</font>]<font color='#5555FF'>&amp;</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font><font color='#979000'>0</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;  <b>}</b>
+    <font color='#0000FF'>inline</font> <font color='#0000FF'><u>bool</u></font> <b><a name='cpu_has_sse41_instructions'></a>cpu_has_sse41_instructions</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>  <b>{</b> <font color='#0000FF'>return</font> <font color='#979000'>0</font><font color='#5555FF'>!</font><font color='#5555FF'>=</font><font face='Lucida Console'>(</font><font color='#BB00BB'>cpuid</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>[<font color='#979000'>2</font>]<font color='#5555FF'>&amp;</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font><font color='#979000'>19</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <b>}</b>
+    <font color='#0000FF'>inline</font> <font color='#0000FF'><u>bool</u></font> <b><a name='cpu_has_sse42_instructions'></a>cpu_has_sse42_instructions</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>  <b>{</b> <font color='#0000FF'>return</font> <font color='#979000'>0</font><font color='#5555FF'>!</font><font color='#5555FF'>=</font><font face='Lucida Console'>(</font><font color='#BB00BB'>cpuid</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>[<font color='#979000'>2</font>]<font color='#5555FF'>&amp;</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font><font color='#979000'>20</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <b>}</b>
+    <font color='#0000FF'>inline</font> <font color='#0000FF'><u>bool</u></font> <b><a name='cpu_has_avx_instructions'></a>cpu_has_avx_instructions</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>    <b>{</b> <font color='#0000FF'>return</font> <font color='#979000'>0</font><font color='#5555FF'>!</font><font color='#5555FF'>=</font><font face='Lucida Console'>(</font><font color='#BB00BB'>cpuid</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>[<font color='#979000'>2</font>]<font color='#5555FF'>&amp;</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font><font color='#979000'>28</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <b>}</b>
+    <font color='#0000FF'>inline</font> <font color='#0000FF'><u>bool</u></font> <b><a name='cpu_has_avx2_instructions'></a>cpu_has_avx2_instructions</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>   <b>{</b> <font color='#0000FF'>return</font> <font color='#979000'>0</font><font color='#5555FF'>!</font><font color='#5555FF'>=</font><font face='Lucida Console'>(</font><font color='#BB00BB'>cpuid</font><font face='Lucida Console'>(</font><font color='#979000'>7</font><font face='Lucida Console'>)</font>[<font color='#979000'>1</font>]<font color='#5555FF'>&amp;</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font><font color='#979000'>5</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;  <b>}</b>
+    <font color='#0000FF'>inline</font> <font color='#0000FF'><u>bool</u></font> <b><a name='cpu_has_avx512_instructions'></a>cpu_has_avx512_instructions</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b> <font color='#0000FF'>return</font> <font color='#979000'>0</font><font color='#5555FF'>!</font><font color='#5555FF'>=</font><font face='Lucida Console'>(</font><font color='#BB00BB'>cpuid</font><font face='Lucida Console'>(</font><font color='#979000'>7</font><font face='Lucida Console'>)</font>[<font color='#979000'>1</font>]<font color='#5555FF'>&amp;</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font><font color='#979000'>16</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>; <b>}</b>
+
+    <font color='#0000FF'>inline</font> <font color='#0000FF'><u>void</u></font> <b><a name='warn_about_unavailable_but_used_cpu_instructions'></a>warn_about_unavailable_but_used_cpu_instructions</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>
+    <b>{</b>
+<font color='#0000FF'>#if</font> defined<font face='Lucida Console'>(</font>DLIB_HAVE_AVX2<font face='Lucida Console'>)</font>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font><font color='#BB00BB'>cpu_has_avx2_instructions</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            std::cerr <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>Dlib was compiled to use AVX2 instructions, but these aren't available on your machine.</font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> std::endl;
+<font color='#0000FF'>#elif</font> defined<font face='Lucida Console'>(</font>DLIB_HAVE_AVX<font face='Lucida Console'>)</font>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font><font color='#BB00BB'>cpu_has_avx_instructions</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            std::cerr <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>Dlib was compiled to use AVX instructions, but these aren't available on your machine.</font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> std::endl;
+<font color='#0000FF'>#elif</font> defined<font face='Lucida Console'>(</font>DLIB_HAVE_SSE41<font face='Lucida Console'>)</font>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font><font color='#BB00BB'>cpu_has_sse41_instructions</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            std::cerr <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>Dlib was compiled to use SSE41 instructions, but these aren't available on your machine.</font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> std::endl;
+<font color='#0000FF'>#elif</font> defined<font face='Lucida Console'>(</font>DLIB_HAVE_SSE3<font face='Lucida Console'>)</font>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font><font color='#BB00BB'>cpu_has_sse3_instructions</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            std::cerr <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>Dlib was compiled to use SSE3 instructions, but these aren't available on your machine.</font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> std::endl;
+<font color='#0000FF'>#elif</font> defined<font face='Lucida Console'>(</font>DLIB_HAVE_SSE2<font face='Lucida Console'>)</font>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font><font color='#BB00BB'>cpu_has_sse2_instructions</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            std::cerr <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>Dlib was compiled to use SSE2 instructions, but these aren't available on your machine.</font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> std::endl;
+<font color='#0000FF'>#endif</font>
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+<font color='#0000FF'>#endif</font> <font color='#009900'>// DLIB_SIMd_CHECK_Hh_
+</font>
+
+
+</pre></body></html>

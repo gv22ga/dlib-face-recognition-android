@@ -1,0 +1,289 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - upper_bound_function.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>// Copyright (C) 2017  Davis E. King (davis@dlib.net)
+</font><font color='#009900'>// License: Boost Software License   See LICENSE.txt for the full license.
+</font><font color='#0000FF'>#ifndef</font> DLIB_UPPER_bOUND_FUNCTION_Hh_
+<font color='#0000FF'>#define</font> DLIB_UPPER_bOUND_FUNCTION_Hh_
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='upper_bound_function_abstract.h.html'>upper_bound_function_abstract.h</a>"
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='../svm/svm_c_linear_dcd_trainer.h.html'>../svm/svm_c_linear_dcd_trainer.h</a>"
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='../statistics.h.html'>../statistics.h</a>"
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>limits<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>utility<font color='#5555FF'>&gt;</font>
+
+<font color='#0000FF'>namespace</font> dlib
+<b>{</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>struct</font> <b><a name='function_evaluation'></a>function_evaluation</b>
+    <b>{</b>
+        <b><a name='function_evaluation'></a>function_evaluation</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>default</font>;
+        <b><a name='function_evaluation'></a>function_evaluation</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> x, <font color='#0000FF'><u>double</u></font> y<font face='Lucida Console'>)</font> :x<font face='Lucida Console'>(</font>x<font face='Lucida Console'>)</font>, y<font face='Lucida Console'>(</font>y<font face='Lucida Console'>)</font> <b>{</b><b>}</b>
+
+        matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> x;
+        <font color='#0000FF'><u>double</u></font> y <font color='#5555FF'>=</font> std::numeric_limits<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>::<b><a name='quiet_NaN'></a>quiet_NaN</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <b>}</b>;
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>class</font> <b><a name='upper_bound_function'></a>upper_bound_function</b>
+    <b>{</b>
+
+    <font color='#0000FF'>public</font>:
+
+        <b><a name='upper_bound_function'></a>upper_bound_function</b><font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>default</font>;
+
+        <b><a name='upper_bound_function'></a>upper_bound_function</b><font face='Lucida Console'>(</font>
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> relative_noise_magnitude,
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> solver_eps 
+        <font face='Lucida Console'>)</font> : relative_noise_magnitude<font face='Lucida Console'>(</font>relative_noise_magnitude<font face='Lucida Console'>)</font>, solver_eps<font face='Lucida Console'>(</font>solver_eps<font face='Lucida Console'>)</font>
+        <b>{</b>
+            <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>relative_noise_magnitude <font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+            <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>solver_eps <font color='#5555FF'>&gt;</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+        <b>}</b>
+
+        <font color='#0000FF'>explicit</font> <b><a name='upper_bound_function'></a>upper_bound_function</b><font face='Lucida Console'>(</font>
+            <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font>function_evaluation<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> _points,
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> relative_noise_magnitude <font color='#5555FF'>=</font> <font color='#979000'>0.001</font>,
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> solver_eps <font color='#5555FF'>=</font> <font color='#979000'>0.0001</font>
+        <font face='Lucida Console'>)</font> : relative_noise_magnitude<font face='Lucida Console'>(</font>relative_noise_magnitude<font face='Lucida Console'>)</font>, solver_eps<font face='Lucida Console'>(</font>solver_eps<font face='Lucida Console'>)</font>, points<font face='Lucida Console'>(</font>_points<font face='Lucida Console'>)</font>
+        <b>{</b>
+            <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>relative_noise_magnitude <font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+            <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>solver_eps <font color='#5555FF'>&gt;</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&gt;</font> <font color='#979000'>1</font><font face='Lucida Console'>)</font>
+            <b>{</b>
+                <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>points[<font color='#979000'>0</font>].x.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&gt;</font> <font color='#979000'>0</font>, "<font color='#CC0000'>The vectors can't be empty.</font>"<font face='Lucida Console'>)</font>;
+
+                <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> dims <font color='#5555FF'>=</font> points[<font color='#979000'>0</font>].x.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+                <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font><font color='#5555FF'>&amp;</font> p : points<font face='Lucida Console'>)</font>
+                    <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>p.x.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> dims, "<font color='#CC0000'>All the vectors given to upper_bound_function must have the same dimensionality.</font>"<font face='Lucida Console'>)</font>;
+
+                <font color='#BB00BB'>learn_params</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+            <b>}</b>
+
+        <b>}</b>
+
+        <font color='#0000FF'><u>void</u></font> <b><a name='add'></a>add</b> <font face='Lucida Console'>(</font>
+            <font color='#0000FF'>const</font> function_evaluation<font color='#5555FF'>&amp;</font> point
+        <font face='Lucida Console'>)</font>
+        <b>{</b>
+            <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>point.x.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>!</font><font color='#5555FF'>=</font> <font color='#979000'>0</font>, "<font color='#CC0000'>The vectors can't be empty.</font>"<font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+            <b>{</b>
+                points.<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font>point<font face='Lucida Console'>)</font>;
+                <font color='#0000FF'>return</font>;
+            <b>}</b>
+
+            <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>point.x.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#BB00BB'>dimensionality</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, "<font color='#CC0000'>All the vectors given to upper_bound_function must have the same dimensionality.</font>"<font face='Lucida Console'>)</font>;
+
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&lt;</font> <font color='#979000'>4</font><font face='Lucida Console'>)</font>
+            <b>{</b>
+                points.<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font>point<font face='Lucida Console'>)</font>;
+                <font color='#5555FF'>*</font><font color='#0000FF'>this</font> <font color='#5555FF'>=</font> <font color='#BB00BB'>upper_bound_function</font><font face='Lucida Console'>(</font>points, relative_noise_magnitude, solver_eps<font face='Lucida Console'>)</font>;
+                <font color='#0000FF'>return</font>;
+            <b>}</b>
+
+            points.<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font>point<font face='Lucida Console'>)</font>;
+            <font color='#009900'>// add constraints between the new point and the old points
+</font>            <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> i <font color='#5555FF'>=</font> <font color='#979000'>0</font>; i <font color='#5555FF'>&lt;</font> points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font color='#5555FF'>-</font><font color='#979000'>1</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>i<font face='Lucida Console'>)</font>
+                active_constraints.<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>make_pair</font><font face='Lucida Console'>(</font>i,points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font color='#5555FF'>-</font><font color='#979000'>1</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+            <font color='#BB00BB'>learn_params</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+        <b>}</b>
+
+        <font color='#0000FF'><u>long</u></font> <b><a name='num_points'></a>num_points</b><font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font> 
+        <b>{</b> 
+            <font color='#0000FF'>return</font> points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; 
+        <b>}</b>
+
+        <font color='#0000FF'><u>long</u></font> <b><a name='dimensionality'></a>dimensionality</b><font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>
+        <b>{</b> 
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+                <font color='#0000FF'>return</font> <font color='#979000'>0</font>;
+            <font color='#0000FF'>else</font>
+                <font color='#0000FF'>return</font> points[<font color='#979000'>0</font>].x.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+        <b>}</b>
+
+        <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font>function_evaluation<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> <b><a name='get_points'></a>get_points</b><font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font> 
+        <b>{</b> 
+            <font color='#0000FF'>return</font> points; 
+        <b>}</b>
+
+        <font color='#0000FF'><u>double</u></font> <b><a name='operator'></a>operator</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font face='Lucida Console'>(</font>
+            <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> x
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>
+        <b>{</b>
+            <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font><font color='#BB00BB'>num_points</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&gt;</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+            <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>x.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#BB00BB'>dimensionality</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+
+
+            <font color='#0000FF'><u>double</u></font> upper_bound <font color='#5555FF'>=</font> std::numeric_limits<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>::<font color='#BB00BB'>infinity</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+
+            <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> i <font color='#5555FF'>=</font> <font color='#979000'>0</font>; i <font color='#5555FF'>&lt;</font> points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>i<font face='Lucida Console'>)</font>
+            <b>{</b>
+                <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> local_bound <font color='#5555FF'>=</font> points[i].y <font color='#5555FF'>+</font> std::<font color='#BB00BB'>sqrt</font><font face='Lucida Console'>(</font>offsets[i] <font color='#5555FF'>+</font> <font color='#BB00BB'>dot</font><font face='Lucida Console'>(</font>slopes, <font color='#BB00BB'>squared</font><font face='Lucida Console'>(</font>x<font color='#5555FF'>-</font>points[i].x<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+                upper_bound <font color='#5555FF'>=</font> std::<font color='#BB00BB'>min</font><font face='Lucida Console'>(</font>upper_bound, local_bound<font face='Lucida Console'>)</font>;
+            <b>}</b>
+
+            <font color='#0000FF'>return</font> upper_bound;
+        <b>}</b>
+
+    <font color='#0000FF'>private</font>:
+
+        <font color='#0000FF'><u>void</u></font> <b><a name='learn_params'></a>learn_params</b> <font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font>
+        <b>{</b>
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> dims <font color='#5555FF'>=</font> points[<font color='#979000'>0</font>].x.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+
+            <font color='#0000FF'>using</font> sample_type <font color='#5555FF'>=</font> std::vector<font color='#5555FF'>&lt;</font>std::pair<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font>,<font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font>;
+            <font color='#0000FF'>using</font> kernel_type <font color='#5555FF'>=</font> sparse_linear_kernel<font color='#5555FF'>&lt;</font>sample_type<font color='#5555FF'>&gt;</font>;
+            std::vector<font color='#5555FF'>&lt;</font>sample_type<font color='#5555FF'>&gt;</font> x;
+            std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font> y;
+
+            <font color='#009900'>// We are going to normalize the data so the values aren't extreme.  First, we
+</font>            <font color='#009900'>// collect statistics on our data.
+</font>            std::vector<font color='#5555FF'>&lt;</font>running_stats<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> <font color='#BB00BB'>x_rs</font><font face='Lucida Console'>(</font>dims<font face='Lucida Console'>)</font>;
+            running_stats<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font> y_rs;
+            <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font><font color='#5555FF'>&amp;</font> v : points<font face='Lucida Console'>)</font>
+            <b>{</b>
+                <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> i <font color='#5555FF'>=</font> <font color='#979000'>0</font>; i <font color='#5555FF'>&lt;</font> v.x.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>i<font face='Lucida Console'>)</font>
+                    x_rs[i].<font color='#BB00BB'>add</font><font face='Lucida Console'>(</font>v.<font color='#BB00BB'>x</font><font face='Lucida Console'>(</font>i<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+                y_rs.<font color='#BB00BB'>add</font><font face='Lucida Console'>(</font>v.y<font face='Lucida Console'>)</font>;
+            <b>}</b>
+
+
+            <font color='#009900'>// compute normalization vectors for the data.  The only reason we do this is
+</font>            <font color='#009900'>// to make the optimization well conditioned.  In particular, scaling the y
+</font>            <font color='#009900'>// values will prevent numerical errors in the 1-diff*diff computation below that
+</font>            <font color='#009900'>// would otherwise result when diff is really big.  Also, scaling the xvalues
+</font>            <font color='#009900'>// to be about 1 will similarly make the optimization more stable and it also
+</font>            <font color='#009900'>// has the added benefit of keeping the relative_noise_magnitude's scale
+</font>            <font color='#009900'>// constant regardless of the size of x values.
+</font>            <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> yscale <font color='#5555FF'>=</font> <font color='#979000'>1.0</font><font color='#5555FF'>/</font>y_rs.<font color='#BB00BB'>stddev</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+            std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font> <font color='#BB00BB'>xscale</font><font face='Lucida Console'>(</font>dims<font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> i <font color='#5555FF'>=</font> <font color='#979000'>0</font>; i <font color='#5555FF'>&lt;</font> xscale.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>i<font face='Lucida Console'>)</font>
+                xscale[i] <font color='#5555FF'>=</font> <font color='#979000'>1.0</font><font color='#5555FF'>/</font><font face='Lucida Console'>(</font>x_rs[i].<font color='#BB00BB'>stddev</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font color='#5555FF'>*</font>yscale<font face='Lucida Console'>)</font>; <font color='#009900'>// make it so that xscale[i]*yscale ==  1/x_rs[i].stddev()
+</font>
+            sample_type samp;
+            <font color='#0000FF'>auto</font> add_constraint <font color='#5555FF'>=</font> [<font color='#5555FF'>&amp;</font>]<font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> i, <font color='#0000FF'><u>long</u></font> j<font face='Lucida Console'>)</font> <b>{</b>
+                samp.<font color='#BB00BB'>clear</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+                <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> k <font color='#5555FF'>=</font> <font color='#979000'>0</font>; k <font color='#5555FF'>&lt;</font> dims; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>k<font face='Lucida Console'>)</font>
+                <b>{</b>
+                    <font color='#0000FF'><u>double</u></font> temp <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>points[i].<font color='#BB00BB'>x</font><font face='Lucida Console'>(</font>k<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font> points[j].<font color='#BB00BB'>x</font><font face='Lucida Console'>(</font>k<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font color='#5555FF'>*</font>xscale[k]<font color='#5555FF'>*</font>yscale;
+                    samp.<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>make_pair</font><font face='Lucida Console'>(</font>k, temp<font color='#5555FF'>*</font>temp<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+                <b>}</b>
+
+                <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>points[i].y <font color='#5555FF'>&gt;</font> points[j].y<font face='Lucida Console'>)</font>
+                    samp.<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>make_pair</font><font face='Lucida Console'>(</font>dims <font color='#5555FF'>+</font> j, relative_noise_magnitude<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+                <font color='#0000FF'>else</font>
+                    samp.<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>make_pair</font><font face='Lucida Console'>(</font>dims <font color='#5555FF'>+</font> i, relative_noise_magnitude<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+                <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> diff <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>points[i].y <font color='#5555FF'>-</font> points[j].y<font face='Lucida Console'>)</font><font color='#5555FF'>*</font>yscale;
+                samp.<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>make_pair</font><font face='Lucida Console'>(</font>dims <font color='#5555FF'>+</font> points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, <font color='#979000'>1</font><font color='#5555FF'>-</font>diff<font color='#5555FF'>*</font>diff<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+                x.<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font>samp<font face='Lucida Console'>)</font>;
+                y.<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>;
+            <b>}</b>;
+
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>active_constraints.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+            <b>{</b>
+                x.<font color='#BB00BB'>reserve</font><font face='Lucida Console'>(</font>points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font color='#5555FF'>*</font><font face='Lucida Console'>(</font>points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font color='#5555FF'>-</font><font color='#979000'>1</font><font face='Lucida Console'>)</font><font color='#5555FF'>/</font><font color='#979000'>2</font><font face='Lucida Console'>)</font>;
+                y.<font color='#BB00BB'>reserve</font><font face='Lucida Console'>(</font>points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font color='#5555FF'>*</font><font face='Lucida Console'>(</font>points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font color='#5555FF'>-</font><font color='#979000'>1</font><font face='Lucida Console'>)</font><font color='#5555FF'>/</font><font color='#979000'>2</font><font face='Lucida Console'>)</font>;
+                <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> i <font color='#5555FF'>=</font> <font color='#979000'>0</font>; i <font color='#5555FF'>&lt;</font> points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>i<font face='Lucida Console'>)</font>
+                <b>{</b>
+                    <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> j <font color='#5555FF'>=</font> i<font color='#5555FF'>+</font><font color='#979000'>1</font>; j <font color='#5555FF'>&lt;</font> points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>j<font face='Lucida Console'>)</font>
+                    <b>{</b>
+                        <font color='#BB00BB'>add_constraint</font><font face='Lucida Console'>(</font>i,j<font face='Lucida Console'>)</font>;
+                    <b>}</b>
+                <b>}</b>
+            <b>}</b>
+            <font color='#0000FF'>else</font>
+            <b>{</b>
+                <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font><font color='#5555FF'>&amp;</font> p : active_constraints<font face='Lucida Console'>)</font>
+                    <font color='#BB00BB'>add_constraint</font><font face='Lucida Console'>(</font>p.first, p.second<font face='Lucida Console'>)</font>;
+            <b>}</b>
+
+
+
+
+            svm_c_linear_dcd_trainer<font color='#5555FF'>&lt;</font>kernel_type<font color='#5555FF'>&gt;</font> trainer;
+            trainer.<font color='#BB00BB'>set_c</font><font face='Lucida Console'>(</font>std::numeric_limits<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>::<font color='#BB00BB'>infinity</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            <font color='#009900'>//trainer.be_verbose();
+</font>            trainer.<font color='#BB00BB'>force_last_weight_to_1</font><font face='Lucida Console'>(</font><font color='#979000'>true</font><font face='Lucida Console'>)</font>;
+            trainer.<font color='#BB00BB'>set_epsilon</font><font face='Lucida Console'>(</font>solver_eps<font face='Lucida Console'>)</font>;
+
+            svm_c_linear_dcd_trainer<font color='#5555FF'>&lt;</font>kernel_type<font color='#5555FF'>&gt;</font>::optimizer_state state;
+            <font color='#0000FF'>auto</font> df <font color='#5555FF'>=</font> trainer.<font color='#BB00BB'>train</font><font face='Lucida Console'>(</font>x,y, state<font face='Lucida Console'>)</font>;
+
+            <font color='#009900'>// save the active constraints for later so we can use them inside add() to add
+</font>            <font color='#009900'>// new points efficiently.
+</font>            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>active_constraints.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+            <b>{</b>
+                <font color='#0000FF'><u>long</u></font> k <font color='#5555FF'>=</font> <font color='#979000'>0</font>;
+                <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> i <font color='#5555FF'>=</font> <font color='#979000'>0</font>; i <font color='#5555FF'>&lt;</font> points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>i<font face='Lucida Console'>)</font>
+                <b>{</b>
+                    <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> j <font color='#5555FF'>=</font> i<font color='#5555FF'>+</font><font color='#979000'>1</font>; j <font color='#5555FF'>&lt;</font> points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>j<font face='Lucida Console'>)</font>
+                    <b>{</b>
+                        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>state.<font color='#BB00BB'>get_alpha</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>[k<font color='#5555FF'>+</font><font color='#5555FF'>+</font>] <font color='#5555FF'>!</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+                            active_constraints.<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>make_pair</font><font face='Lucida Console'>(</font>i,j<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+                    <b>}</b>
+                <b>}</b>
+            <b>}</b>
+            <font color='#0000FF'>else</font>
+            <b>{</b>
+                <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font>state.<font color='#BB00BB'>get_alpha</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> active_constraints.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+                new_active_constraints.<font color='#BB00BB'>clear</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+                <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> i <font color='#5555FF'>=</font> <font color='#979000'>0</font>; i <font color='#5555FF'>&lt;</font> state.<font color='#BB00BB'>get_alpha</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>i<font face='Lucida Console'>)</font>
+                <b>{</b>
+                    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>state.<font color='#BB00BB'>get_alpha</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>[i] <font color='#5555FF'>!</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+                        new_active_constraints.<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font>active_constraints[i]<font face='Lucida Console'>)</font>;
+                <b>}</b>
+                active_constraints.<font color='#BB00BB'>swap</font><font face='Lucida Console'>(</font>new_active_constraints<font face='Lucida Console'>)</font>;
+            <b>}</b>
+
+            <font color='#009900'>//std::cout &lt;&lt; "points.size(): " &lt;&lt; points.size() &lt;&lt; std::endl;
+</font>            <font color='#009900'>//std::cout &lt;&lt; "active_constraints.size(): " &lt;&lt; active_constraints.size() &lt;&lt; std::endl;
+</font>
+
+            <font color='#0000FF'>const</font> <font color='#0000FF'>auto</font><font color='#5555FF'>&amp;</font> bv <font color='#5555FF'>=</font> df.<font color='#BB00BB'>basis_vectors</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+            slopes.<font color='#BB00BB'>set_size</font><font face='Lucida Console'>(</font>dims<font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> i <font color='#5555FF'>=</font> <font color='#979000'>0</font>; i <font color='#5555FF'>&lt;</font> dims; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>i<font face='Lucida Console'>)</font>
+                <font color='#BB00BB'>slopes</font><font face='Lucida Console'>(</font>i<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> bv[i].second<font color='#5555FF'>*</font>xscale[i]<font color='#5555FF'>*</font>xscale[i];
+
+            <font color='#009900'>//std::cout &lt;&lt; "slopes:" &lt;&lt; trans(slopes);
+</font>
+            offsets.<font color='#BB00BB'>assign</font><font face='Lucida Console'>(</font>points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>,<font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+
+
+            <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> i <font color='#5555FF'>=</font> <font color='#979000'>0</font>; i <font color='#5555FF'>&lt;</font> points.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>i<font face='Lucida Console'>)</font>
+            <b>{</b>
+                offsets[i] <font color='#5555FF'>+</font><font color='#5555FF'>=</font> bv[slopes.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font color='#5555FF'>+</font>i].second<font color='#5555FF'>*</font>relative_noise_magnitude;
+            <b>}</b>
+        <b>}</b>
+
+
+
+        <font color='#0000FF'><u>double</u></font> relative_noise_magnitude <font color='#5555FF'>=</font> <font color='#979000'>0.001</font>;
+        <font color='#0000FF'><u>double</u></font> solver_eps <font color='#5555FF'>=</font> <font color='#979000'>0.0001</font>; 
+        std::vector<font color='#5555FF'>&lt;</font>std::pair<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font>,<font color='#0000FF'><u>size_t</u></font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> active_constraints, new_active_constraints;
+
+        std::vector<font color='#5555FF'>&lt;</font>function_evaluation<font color='#5555FF'>&gt;</font> points;
+        std::vector<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font> offsets; <font color='#009900'>// offsets.size() == points.size()
+</font>        matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> slopes; <font color='#009900'>// slopes.size() == points[0].first.size()
+</font>    <b>}</b>;
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+<b>}</b>
+
+<font color='#0000FF'>#endif</font> <font color='#009900'>// DLIB_UPPER_bOUND_FUNCTION_Hh_
+</font>
+
+
+</pre></body></html>

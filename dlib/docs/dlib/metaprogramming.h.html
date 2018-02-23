@@ -1,0 +1,74 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - metaprogramming.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>// Copyright (C) 2017  Davis E. King (davis@dlib.net)
+</font><font color='#009900'>// License: Boost Software License   See LICENSE.txt for the full license.
+</font><font color='#0000FF'>#ifndef</font> DLIB_METApROGRAMMING_Hh_
+<font color='#0000FF'>#define</font> DLIB_METApROGRAMMING_Hh_
+
+
+<font color='#0000FF'>namespace</font> dlib
+<b>{</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font>... n<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>struct</font> <b><a name='compile_time_integer_list'></a>compile_time_integer_list</b> 
+    <b>{</b>
+        <font color='#009900'>/*!
+            WHAT THIS OBJECT REPRESENTS
+                The point of this type is to, as the name suggests, hold a compile time list of integers.
+                As an example, here is something simple you could do with it:
+
+                    template &lt;size_t... ints&gt;
+                    void print_compile_time_ints (
+                        compile_time_integer_list&lt;ints...&gt;
+                    )
+                    {
+                        print(ints...);
+                    }
+
+                    int main()
+                    {
+                        print_compile_time_ints(compile_time_integer_list&lt;0,4,9&gt;());
+                    }
+
+                Which just calls: print(0,4,9);
+
+                This is a simple example, but this kind of thing is useful in larger and
+                more complex template metaprogramming constructs.
+        !*/</font>
+
+        <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font> m<font color='#5555FF'>&gt;</font>
+        <font color='#0000FF'>struct</font> <b><a name='push_back'></a>push_back</b>
+        <b>{</b>
+            <font color='#0000FF'>typedef</font> compile_time_integer_list<font color='#5555FF'>&lt;</font>n..., m<font color='#5555FF'>&gt;</font> type;
+        <b>}</b>;
+    <b>}</b>;
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>size_t</u></font> max<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>struct</font> <b><a name='make_compile_time_integer_range'></a>make_compile_time_integer_range</b>
+    <b>{</b>
+        <font color='#009900'>/*!
+            WHAT THIS OBJECT REPRESENTS
+                This object makes a compile_time_integer_list containing the integers in the range [1,max] inclusive.
+                For example:
+                    make_compile_time_integer_range&lt;4&gt;::type
+                evaluates to:
+                    compile_time_integer_list&lt;1,2,3,4&gt;
+        !*/</font>
+
+        <font color='#0000FF'>typedef</font> <font color='#0000FF'>typename</font> make_compile_time_integer_range<font color='#5555FF'>&lt;</font>max<font color='#5555FF'>-</font><font color='#979000'>1</font><font color='#5555FF'>&gt;</font>::type::<font color='#0000FF'>template</font> push_back<font color='#5555FF'>&lt;</font>max<font color='#5555FF'>&gt;</font>::type type;
+    <b>}</b>;
+    <font color='#009900'>// base case
+</font>    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='make_compile_time_integer_range'></a>make_compile_time_integer_range</b><font color='#5555FF'>&lt;</font><font color='#979000'>0</font><font color='#5555FF'>&gt;</font> <b>{</b> <font color='#0000FF'>typedef</font> compile_time_integer_list<font color='#5555FF'>&lt;</font><font color='#5555FF'>&gt;</font> type; <b>}</b>;
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+<b>}</b>
+
+<font color='#0000FF'>#endif</font> <font color='#009900'>// DLIB_METApROGRAMMING_Hh_
+</font>
+
+
+</pre></body></html>

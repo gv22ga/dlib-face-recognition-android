@@ -1,0 +1,181 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - pbtrf.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>// Copyright (C) 2010  Davis E. King (davis@dlib.net)
+</font><font color='#009900'>// License: Boost Software License   See LICENSE.txt for the full license.
+</font><font color='#0000FF'>#ifndef</font> DLIB_LAPACk_BDC_Hh_
+<font color='#0000FF'>#define</font> DLIB_LAPACk_BDC_Hh_
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='fortran_id.h.html'>fortran_id.h</a>"
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='../matrix.h.html'>../matrix.h</a>"
+<font color='#0000FF'>namespace</font> dlib
+<b>{</b>
+    <font color='#0000FF'>namespace</font> lapack
+    <b>{</b>
+        <font color='#0000FF'>namespace</font> binding
+        <b>{</b>
+            <font color='#0000FF'>extern</font> "<font color='#CC0000'>C</font>"
+            <b>{</b>
+                <font color='#0000FF'><u>void</u></font> <b><a name='DLIB_FORTRAN_ID'></a>DLIB_FORTRAN_ID</b><font face='Lucida Console'>(</font>dpbtrf<font face='Lucida Console'>)</font> <font face='Lucida Console'>(</font><font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font><font color='#5555FF'>*</font> uplo, <font color='#0000FF'>const</font> integer<font color='#5555FF'>*</font> n, <font color='#0000FF'>const</font> integer<font color='#5555FF'>*</font> kd,
+                                              <font color='#0000FF'><u>double</u></font><font color='#5555FF'>*</font> ab, <font color='#0000FF'>const</font> integer<font color='#5555FF'>*</font> ldab, integer<font color='#5555FF'>*</font> info<font face='Lucida Console'>)</font>;
+
+                <font color='#0000FF'><u>void</u></font> <b><a name='DLIB_FORTRAN_ID'></a>DLIB_FORTRAN_ID</b><font face='Lucida Console'>(</font>spbtrf<font face='Lucida Console'>)</font> <font face='Lucida Console'>(</font><font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font><font color='#5555FF'>*</font> uplo, <font color='#0000FF'>const</font> integer<font color='#5555FF'>*</font> n, <font color='#0000FF'>const</font> integer<font color='#5555FF'>*</font> kd,
+                                              <font color='#0000FF'><u>float</u></font><font color='#5555FF'>*</font> ab, <font color='#0000FF'>const</font> integer<font color='#5555FF'>*</font> ldab, integer<font color='#5555FF'>*</font> info<font face='Lucida Console'>)</font>;
+
+            <b>}</b>
+
+            <font color='#0000FF'>inline</font> integer <b><a name='pbtrf'></a>pbtrf</b> <font face='Lucida Console'>(</font><font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> uplo, <font color='#0000FF'>const</font> integer n, <font color='#0000FF'>const</font> integer kd,
+                                  <font color='#0000FF'><u>double</u></font><font color='#5555FF'>*</font> ab, <font color='#0000FF'>const</font> integer ldab<font face='Lucida Console'>)</font>
+            <b>{</b>
+                integer info <font color='#5555FF'>=</font> <font color='#979000'>0</font>;
+                <font color='#BB00BB'>DLIB_FORTRAN_ID</font><font face='Lucida Console'>(</font>dpbtrf<font face='Lucida Console'>)</font><font face='Lucida Console'>(</font><font color='#5555FF'>&amp;</font>uplo, <font color='#5555FF'>&amp;</font>n, <font color='#5555FF'>&amp;</font>kd, ab, <font color='#5555FF'>&amp;</font>ldab, <font color='#5555FF'>&amp;</font>info<font face='Lucida Console'>)</font>;
+                <font color='#0000FF'>return</font> info;
+            <b>}</b>
+
+            <font color='#0000FF'>inline</font> integer <b><a name='pbtrf'></a>pbtrf</b> <font face='Lucida Console'>(</font><font color='#0000FF'>const</font> <font color='#0000FF'><u>char</u></font> uplo, <font color='#0000FF'>const</font> integer n, <font color='#0000FF'>const</font> integer kd,
+                                  <font color='#0000FF'><u>float</u></font><font color='#5555FF'>*</font> ab, <font color='#0000FF'>const</font> integer ldab<font face='Lucida Console'>)</font>
+            <b>{</b>
+                integer info <font color='#5555FF'>=</font> <font color='#979000'>0</font>;
+                <font color='#BB00BB'>DLIB_FORTRAN_ID</font><font face='Lucida Console'>(</font>spbtrf<font face='Lucida Console'>)</font><font face='Lucida Console'>(</font><font color='#5555FF'>&amp;</font>uplo, <font color='#5555FF'>&amp;</font>n, <font color='#5555FF'>&amp;</font>kd, ab, <font color='#5555FF'>&amp;</font>ldab, <font color='#5555FF'>&amp;</font>info<font face='Lucida Console'>)</font>;
+                <font color='#0000FF'>return</font> info;
+            <b>}</b>
+        <b>}</b>
+
+    <font color='#009900'>// ------------------------------------------------------------------------------------
+</font><font color='#009900'>/*  DPBTRF(l)		LAPACK routine (version	1.1)		    DPBTRF(l)
+
+NAME
+  DPBTRF - compute the Cholesky	factorization of a real	symmetric positive
+  definite band	matrix A
+
+SYNOPSIS
+
+  SUBROUTINE DPBTRF( UPLO, N, KD, AB, LDAB, INFO )
+
+      CHARACTER	     UPLO
+
+      INTEGER	     INFO, KD, LDAB, N
+
+      DOUBLE	     PRECISION AB( LDAB, * )
+
+PURPOSE
+  DPBTRF computes the Cholesky factorization of	a real symmetric positive
+  definite band	matrix A.
+
+  The factorization has	the form
+     A = U**T *	U,  if UPLO = 'U', or
+     A = L  * L**T,  if	UPLO = 'L',
+  where	U is an	upper triangular matrix	and L is lower triangular.
+
+ARGUMENTS
+
+  UPLO	  (input) CHARACTER*1
+	  = 'U':  Upper	triangle of A is stored;
+	  = 'L':  Lower	triangle of A is stored.
+
+  N	  (input) INTEGER
+	  The order of the matrix A.  N	&gt;= 0.
+
+  KD	  (input) INTEGER
+	  The number of	superdiagonals of the matrix A if UPLO = 'U', or the
+	  number of subdiagonals if UPLO = 'L'.	 KD &gt;= 0.
+
+  AB	  (input/output) DOUBLE	PRECISION array, dimension (LDAB,N)
+	  On entry, the	upper or lower triangle	of the symmetric band matrix
+	  A, stored in the first KD+1 rows of the array.  The j-th column of
+	  A is stored in the j-th column of the	array AB as follows: if	UPLO
+	  = 'U', AB(kd+1+i-j,j)	= A(i,j) for max(1,j-kd)&lt;=i&lt;=j;	if UPLO	=
+	  'L', AB(1+i-j,j)    =	A(i,j) for j&lt;=i&lt;=min(n,j+kd).
+
+	  On exit, if INFO = 0,	the triangular factor U	or L from the Chole-
+	  sky factorization A =	U**T*U or A = L*L**T of	the band matrix	A, in
+	  the same storage format as A.
+
+  LDAB	  (input) INTEGER
+	  The leading dimension	of the array AB.  LDAB &gt;= KD+1.
+
+  INFO	  (output) INTEGER
+	  = 0:	successful exit
+	  &lt; 0:	if INFO	= -i, the i-th argument	had an illegal value
+	  &gt; 0:	if INFO	= i, the leading minor of order	i is not positive
+	  definite, and	the factorization could	not be completed.
+
+FURTHER	DETAILS
+  The band storage scheme is illustrated by the	following example, when	N =
+  6, KD	= 2, and UPLO =	'U':
+
+  On entry:			  On exit:
+
+      *	   *   a13  a24	 a35  a46      *    *	u13  u24  u35  u46
+      *	  a12  a23  a34	 a45  a56      *   u12	u23  u34  u45  u56
+     a11  a22  a33  a44	 a55  a66     u11  u22	u33  u44  u55  u66
+
+  Similarly, if	UPLO = 'L' the format of A is as follows:
+
+  On entry:			  On exit:
+
+     a11  a22  a33  a44	 a55  a66     l11  l22	l33  l44  l55  l66
+     a21  a32  a43  a54	 a65   *      l21  l32	l43  l54  l65	*
+     a31  a42  a53  a64	  *    *      l31  l42	l53  l64   *	*
+
+  Array	elements marked	* are not used by the routine.
+
+  Contributed by
+  Peter	Mayes and Giuseppe Radicati, IBM ECSEC,	Rome, March 23,	1989 */</font>
+
+    <font color='#009900'>// ------------------------------------------------------------------------------------
+</font>
+        <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+            <font color='#0000FF'>typename</font> T, 
+            <font color='#0000FF'><u>long</u></font> NR1, <font color='#0000FF'><u>long</u></font> NC1,
+            <font color='#0000FF'>typename</font> MM
+            <font color='#5555FF'>&gt;</font>
+        <font color='#0000FF'><u>int</u></font> <b><a name='pbtrf'></a>pbtrf</b> <font face='Lucida Console'>(</font>
+            <font color='#0000FF'><u>char</u></font> uplo, matrix<font color='#5555FF'>&lt;</font>T,NR1,NC1,MM,column_major_layout<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> ab
+        <font face='Lucida Console'>)</font>
+        <b>{</b>
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> ldab <font color='#5555FF'>=</font> ab.<font color='#BB00BB'>nr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> n <font color='#5555FF'>=</font> ab.<font color='#BB00BB'>nc</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> kd <font color='#5555FF'>=</font> ldab <font color='#5555FF'>-</font> <font color='#979000'>1</font>; <font color='#009900'>// assume fully packed 
+</font>
+            <font color='#0000FF'><u>int</u></font> info <font color='#5555FF'>=</font> binding::<font color='#BB00BB'>pbtrf</font><font face='Lucida Console'>(</font>uplo, n, kd, <font color='#5555FF'>&amp;</font><font color='#BB00BB'>ab</font><font face='Lucida Console'>(</font><font color='#979000'>0</font>,<font color='#979000'>0</font><font face='Lucida Console'>)</font>, ldab<font face='Lucida Console'>)</font>;
+
+            <font color='#0000FF'>return</font> info;
+        <b>}</b>
+
+    <font color='#009900'>// ------------------------------------------------------------------------------------
+</font>
+
+        <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font>
+            <font color='#0000FF'>typename</font> T, 
+            <font color='#0000FF'><u>long</u></font> NR1, <font color='#0000FF'><u>long</u></font> NC1,
+            <font color='#0000FF'>typename</font> MM
+            <font color='#5555FF'>&gt;</font>
+        <font color='#0000FF'><u>int</u></font> <b><a name='pbtrf'></a>pbtrf</b> <font face='Lucida Console'>(</font>
+            <font color='#0000FF'><u>char</u></font> uplo, matrix<font color='#5555FF'>&lt;</font>T,NR1,NC1,MM,row_major_layout<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> ab
+        <font face='Lucida Console'>)</font>
+        <b>{</b>
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> ldab <font color='#5555FF'>=</font> ab.<font color='#BB00BB'>nr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> n <font color='#5555FF'>=</font> ab.<font color='#BB00BB'>nc</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> kd <font color='#5555FF'>=</font> ldab <font color='#5555FF'>-</font> <font color='#979000'>1</font>; <font color='#009900'>// assume fully packed 
+</font>
+            matrix<font color='#5555FF'>&lt;</font>T,NC1,NR1,MM,row_major_layout<font color='#5555FF'>&gt;</font> abt <font color='#5555FF'>=</font> <font color='#BB00BB'>trans</font><font face='Lucida Console'>(</font>ab<font face='Lucida Console'>)</font>;
+
+            <font color='#0000FF'><u>int</u></font> info <font color='#5555FF'>=</font> binding::<font color='#BB00BB'>pbtrf</font><font face='Lucida Console'>(</font>uplo, n, kd, <font color='#5555FF'>&amp;</font><font color='#BB00BB'>abt</font><font face='Lucida Console'>(</font><font color='#979000'>0</font>,<font color='#979000'>0</font><font face='Lucida Console'>)</font>, ldab<font face='Lucida Console'>)</font>;
+
+            ab <font color='#5555FF'>=</font> <font color='#BB00BB'>trans</font><font face='Lucida Console'>(</font>abt<font face='Lucida Console'>)</font>;
+
+            <font color='#0000FF'>return</font> info;
+        <b>}</b>
+
+    <font color='#009900'>// ------------------------------------------------------------------------------------
+</font>
+    <b>}</b>
+
+<b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+<font color='#0000FF'>#endif</font> <font color='#009900'>// DLIB_LAPACk_BDC_Hh_
+</font>
+
+
+</pre></body></html>

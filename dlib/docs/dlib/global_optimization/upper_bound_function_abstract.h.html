@@ -1,0 +1,215 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - upper_bound_function_abstract.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>// Copyright (C) 2017  Davis E. King (davis@dlib.net)
+</font><font color='#009900'>// License: Boost Software License   See LICENSE.txt for the full license.
+</font><font color='#0000FF'>#undef</font> DLIB_UPPER_bOUND_FUNCTION_ABSTRACT_Hh_
+<font color='#0000FF'>#ifdef</font> DLIB_UPPER_bOUND_FUNCTION_ABSTRACT_Hh_
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='../matrix.h.html'>../matrix.h</a>"
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>limits<font color='#5555FF'>&gt;</font>
+
+<font color='#0000FF'>namespace</font> dlib
+<b>{</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>struct</font> <b><a name='function_evaluation'></a>function_evaluation</b>
+    <b>{</b>
+        <font color='#009900'>/*!
+            WHAT THIS OBJECT REPRESENTS
+                This object records the output of a real valued function in response to
+                some input. 
+
+                In particular, if you have a function F(x) then the function_evaluation is
+                simply a struct that records x and the scalar value F(x).
+        !*/</font>
+
+        <b><a name='function_evaluation'></a>function_evaluation</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>default</font>;
+        <b><a name='function_evaluation'></a>function_evaluation</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> x, <font color='#0000FF'><u>double</u></font> y<font face='Lucida Console'>)</font> :x<font face='Lucida Console'>(</font>x<font face='Lucida Console'>)</font>, y<font face='Lucida Console'>(</font>y<font face='Lucida Console'>)</font> <b>{</b><b>}</b>
+
+        matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> x;
+        <font color='#0000FF'><u>double</u></font> y <font color='#5555FF'>=</font> std::numeric_limits<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>::<b><a name='quiet_NaN'></a>quiet_NaN</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <b>}</b>;
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>class</font> <b><a name='upper_bound_function'></a>upper_bound_function</b>
+    <b>{</b>
+        <font color='#009900'>/*!
+            WHAT THIS OBJECT REPRESENTS
+                This object represents a piecewise linear non-parametric function that can
+                be used to define an upper bound on some more complex and unknown function.
+                To describe this precisely, lets assume there is a function F(x) which you
+                are capable of sampling from but otherwise know nothing about, and that you
+                would like to find an upper bounding function U(x) such that U(x) &gt;= F(x)
+                for any x.  It would also be good if U(x)-F(x) was minimal.  I.e. we would
+                like U(x) to be a tight upper bound, not something vacuous like U(x) =
+                infinity.
+
+                The upper_bound_function class is a tool for creating this kind of upper
+                bounding function from a set of function_evaluations of F(x).  We do this
+                by considering only U(x) of the form:
+                    U = [](matrix&lt;double,0,1&gt; x) {
+                       double min_ub = infinity;
+                       for (size_t i = 0; i &lt; POINTS.size(); ++i) {
+                            function_evaluation p = POINTS[i]
+                            double local_bound = p.y + sqrt(noise_terms[i] + trans(p.x-x)*M*(p.x-x))
+                            min_ub = min(min_ub, local_bound)
+                        }
+                        return min_ub;
+                    }
+                Where POINTS is an array of function_evaluation instances drawn from F(x),
+                M is a diagonal matrix, and noise_terms is an array of scalars.
+
+                To create an upper bound U(x), the upper_bound_function takes a POINTS array
+                containing evaluations of F(x) as input and solves the following quadratic
+                program to find the parameters of U(x):
+                    
+                    min_{M,noise_terms}:  sum(squared(M)) + sum(squared(noise_terms/relative_noise_magnitude))
+                    s.t.   U(POINTS[i].x) &gt;= POINTS[i].y,  for all i 
+                           noise_terms[i] &gt;= 0
+                           min(M) &gt;= 0
+                           M is a diagonal matrix 
+               
+                Therefore, the quadratic program finds the U(x) that always upper bounds
+                F(x) on the supplied POINTS, but is otherwise as small as possible.
+
+
+
+                The inspiration for the upper_bound_function object came from the AdaLIPO
+                algorithm from this excellent paper:
+                    Global optimization of Lipschitz functions 
+                    Malherbe, Cédric and Vayatis, Nicolas 
+                    International Conference on Machine Learning - 2017
+                In that paper, they propose to use a simpler U(x) where noise_terms is
+                always 0 and M is a diagonal matrix where each diagonal element is the same
+                value.  Therefore, there is only a single scalar parameter for U(x) in
+                their formulation of the problem.  This causes difficulties if F(x) is
+                stochastic or has discontinuities since, without the noise term, M will
+                become really huge and the upper bound becomes vacuously large.  It is also
+                problematic if the gradient of F(x) with respect to x contains elements of
+                widely varying magnitude since the simpler formulation of U(x) assumes a
+                uniform rate of change regardless of which dimension is varying. 
+        !*/</font>
+
+    <font color='#0000FF'>public</font>:
+
+        <b><a name='upper_bound_function'></a>upper_bound_function</b><font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font>;
+        <font color='#009900'>/*!
+            ensures
+                - #num_points() == 0
+                - #dimensionality() == 0
+        !*/</font>
+
+        <font color='#0000FF'>explicit</font> <b><a name='upper_bound_function'></a>upper_bound_function</b><font face='Lucida Console'>(</font>
+            <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font>function_evaluation<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> points,
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> relative_noise_magnitude <font color='#5555FF'>=</font> <font color='#979000'>0.001</font>,
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> solver_eps <font color='#5555FF'>=</font> <font color='#979000'>0.0001</font>
+        <font face='Lucida Console'>)</font>;
+        <font color='#009900'>/*!
+            requires
+                - all the x vectors in points must have the same non-zero dimensionality.
+                - relative_noise_magnitude &gt;= 0
+                - solver_eps &gt; 0
+            ensures
+                - Creates an upper bounding function U(x), as described above, assuming that
+                  the given points are drawn from F(x).
+                - Uses the provided relative_noise_magnitude when solving the QP, as
+                  described above.  Note that relative_noise_magnitude can be set to 0.  If
+                  you do this then all the noise terms are constrained to 0.  You should
+                  only do this if you know F(x) is non-stochastic and continuous
+                  everywhere.
+                - When solving the QP used to find the parameters of U(x), the upper
+                  bounding function, we solve the QP to solver_eps accuracy.   It's
+                  possible that large enough solver_eps can lead to upper bounds that don't
+                  upper bound all the supplied points.  But for reasonable epsilon values
+                  this shouldn't be a problem. 
+                - #num_points() == points.size()
+                - #dimensionality() == points[0].x.size()
+        !*/</font>
+
+        <b><a name='upper_bound_function'></a>upper_bound_function</b><font face='Lucida Console'>(</font>
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> relative_noise_magnitude,
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>double</u></font> solver_eps 
+        <font face='Lucida Console'>)</font>;
+        <font color='#009900'>/*!
+            requires
+                - relative_noise_magnitude &gt;= 0
+                - solver_eps &gt; 0
+            ensures
+                - #num_points() == 0
+                - #dimensionality() == 0
+                - This destructor is the same as calling the above constructor with points.size()==0
+        !*/</font>
+
+
+        <font color='#0000FF'><u>void</u></font> <b><a name='add'></a>add</b> <font face='Lucida Console'>(</font>
+            <font color='#0000FF'>const</font> function_evaluation<font color='#5555FF'>&amp;</font> point
+        <font face='Lucida Console'>)</font>;
+        <font color='#009900'>/*!
+            requires
+                - num_points() == 0 || point.x.size() == dimensionality()
+                - point.x.size() != 0
+            ensures
+                - Adds point to get_points().
+                - Incrementally updates the upper bounding function with the given function
+                  evaluation.  That is, we assume that F(point.x)==point.y and solve the QP
+                  described above to find the new U(x) that upper bounds all the points
+                  this object knows about (i.e. all the points in get_points() and the new point).
+                - Calling add() is much faster than recreating the upper_bound_function
+                  from scratch with all the points.  This is because we warm start with the
+                  previous solution to the QP.  This is done by discarding any non-active
+                  constraints and solving the QP again with only the previously active
+                  constraints and the new constraints formed by all the pairs of the new
+                  point and the old points.  This means the QP solved by add() is much
+                  smaller than the QP that would be solved by a fresh call to the
+                  upper_bound_function constructor.
+        !*/</font>
+
+        <font color='#0000FF'>const</font> std::vector<font color='#5555FF'>&lt;</font>function_evaluation<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> <b><a name='get_points'></a>get_points</b><font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>;
+        <font color='#009900'>/*!
+            ensures
+                - returns the points from F(x) used to define this upper bounding function.
+                  These are all the function_evaluation objects given to this object via
+                  its constructor and add().
+        !*/</font>
+
+        <font color='#0000FF'><u>long</u></font> <b><a name='num_points'></a>num_points</b><font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>;
+        <font color='#009900'>/*!
+            ensures
+                - returns the number of points used to define the upper bounding function.
+                  (i.e. returns get_points().size())
+        !*/</font>
+
+        <font color='#0000FF'><u>long</u></font> <b><a name='dimensionality'></a>dimensionality</b><font face='Lucida Console'>(</font>
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>;
+        <font color='#009900'>/*!
+            ensures
+                - returns the dimensionality of the input vectors to the upper bounding function. 
+        !*/</font>
+
+        <font color='#0000FF'><u>double</u></font> <b><a name='operator'></a>operator</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font face='Lucida Console'>(</font>
+            <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> x
+        <font face='Lucida Console'>)</font> <font color='#0000FF'>const</font>;
+        <font color='#009900'>/*!
+            requires
+                - num_points() &gt; 0
+                - x.size() == dimensionality()
+            ensures
+                - return U(x)
+                  (i.e. returns the upper bound on F(x) at x given by our upper bounding function)
+        !*/</font>
+
+    <b>}</b>;
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+<b>}</b>
+
+<font color='#0000FF'>#endif</font> <font color='#009900'>// DLIB_UPPER_bOUND_FUNCTION_ABSTRACT_Hh_
+</font>
+
+
+</pre></body></html>

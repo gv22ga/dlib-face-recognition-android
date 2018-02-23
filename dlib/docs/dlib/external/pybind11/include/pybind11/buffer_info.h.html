@@ -1,0 +1,111 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - buffer_info.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>/*
+    pybind11/buffer_info.h: Python buffer object interface
+
+    Copyright (c) 2016 Wenzel Jakob &lt;wenzel.jakob@epfl.ch&gt;
+
+    All rights reserved. Use of this source code is governed by a
+    BSD-style license that can be found in the LICENSE file.
+*/</font>
+
+<font color='#0000FF'>#pragma</font> once
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='detail/common.h.html'>detail/common.h</a>"
+
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+
+<font color='#009900'>/// Information record describing a Python buffer object
+</font><font color='#0000FF'>struct</font> <b><a name='buffer_info'></a>buffer_info</b> <b>{</b>
+    <font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font>ptr <font color='#5555FF'>=</font> nullptr;          <font color='#009900'>// Pointer to the underlying storage
+</font>    ssize_t itemsize <font color='#5555FF'>=</font> <font color='#979000'>0</font>;         <font color='#009900'>// Size of individual items in bytes
+</font>    ssize_t size <font color='#5555FF'>=</font> <font color='#979000'>0</font>;             <font color='#009900'>// Total number of entries
+</font>    std::string format;           <font color='#009900'>// For homogeneous buffers, this should be set to format_descriptor&lt;T&gt;::format()
+</font>    ssize_t ndim <font color='#5555FF'>=</font> <font color='#979000'>0</font>;             <font color='#009900'>// Number of dimensions
+</font>    std::vector<font color='#5555FF'>&lt;</font>ssize_t<font color='#5555FF'>&gt;</font> shape;   <font color='#009900'>// Shape of the tensor (1 entry per dimension)
+</font>    std::vector<font color='#5555FF'>&lt;</font>ssize_t<font color='#5555FF'>&gt;</font> strides; <font color='#009900'>// Number of entries between adjacent entries (for each per dimension)
+</font>
+    <b><a name='buffer_info'></a>buffer_info</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+
+    <b><a name='buffer_info'></a>buffer_info</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font>ptr, ssize_t itemsize, <font color='#0000FF'>const</font> std::string <font color='#5555FF'>&amp;</font>format, ssize_t ndim,
+                detail::any_container<font color='#5555FF'>&lt;</font>ssize_t<font color='#5555FF'>&gt;</font> shape_in, detail::any_container<font color='#5555FF'>&lt;</font>ssize_t<font color='#5555FF'>&gt;</font> strides_in<font face='Lucida Console'>)</font>
+    : ptr<font face='Lucida Console'>(</font>ptr<font face='Lucida Console'>)</font>, itemsize<font face='Lucida Console'>(</font>itemsize<font face='Lucida Console'>)</font>, size<font face='Lucida Console'>(</font><font color='#979000'>1</font><font face='Lucida Console'>)</font>, format<font face='Lucida Console'>(</font>format<font face='Lucida Console'>)</font>, ndim<font face='Lucida Console'>(</font>ndim<font face='Lucida Console'>)</font>,
+      shape<font face='Lucida Console'>(</font>std::move<font face='Lucida Console'>(</font>shape_in<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>, strides<font face='Lucida Console'>(</font>std::move<font face='Lucida Console'>(</font>strides_in<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>ndim <font color='#5555FF'>!</font><font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>ssize_t<font face='Lucida Console'>)</font> shape.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>|</font><font color='#5555FF'>|</font> ndim <font color='#5555FF'>!</font><font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>ssize_t<font face='Lucida Console'>)</font> strides.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>buffer_info: ndim doesn't match shape and/or strides length</font>"<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> i <font color='#5555FF'>=</font> <font color='#979000'>0</font>; i <font color='#5555FF'>&lt;</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font><font face='Lucida Console'>)</font> ndim; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>i<font face='Lucida Console'>)</font>
+            size <font color='#5555FF'>*</font><font color='#5555FF'>=</font> shape[i];
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font>
+    <b><a name='buffer_info'></a>buffer_info</b><font face='Lucida Console'>(</font>T <font color='#5555FF'>*</font>ptr, detail::any_container<font color='#5555FF'>&lt;</font>ssize_t<font color='#5555FF'>&gt;</font> shape_in, detail::any_container<font color='#5555FF'>&lt;</font>ssize_t<font color='#5555FF'>&gt;</font> strides_in<font face='Lucida Console'>)</font>
+    : buffer_info<font face='Lucida Console'>(</font>private_ctr_tag<font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, ptr, <font color='#0000FF'>sizeof</font><font face='Lucida Console'>(</font>T<font face='Lucida Console'>)</font>, format_descriptor<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font>::format<font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, <font color='#0000FF'>static_cast</font><font color='#5555FF'>&lt;</font>ssize_t<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>shape_in<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>size<font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>, std::move<font face='Lucida Console'>(</font>shape_in<font face='Lucida Console'>)</font>, std::move<font face='Lucida Console'>(</font>strides_in<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+
+    <b><a name='buffer_info'></a>buffer_info</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font>ptr, ssize_t itemsize, <font color='#0000FF'>const</font> std::string <font color='#5555FF'>&amp;</font>format, ssize_t size<font face='Lucida Console'>)</font>
+    : buffer_info<font face='Lucida Console'>(</font>ptr, itemsize, format, <font color='#979000'>1</font>, <b>{</b>size<b>}</b>, <b>{</b>itemsize<b>}</b><font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font>
+    <b><a name='buffer_info'></a>buffer_info</b><font face='Lucida Console'>(</font>T <font color='#5555FF'>*</font>ptr, ssize_t size<font face='Lucida Console'>)</font>
+    : buffer_info<font face='Lucida Console'>(</font>ptr, <font color='#0000FF'>sizeof</font><font face='Lucida Console'>(</font>T<font face='Lucida Console'>)</font>, format_descriptor<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font>::format<font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, size<font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+
+    <font color='#0000FF'>explicit</font> <b><a name='buffer_info'></a>buffer_info</b><font face='Lucida Console'>(</font>Py_buffer <font color='#5555FF'>*</font>view, <font color='#0000FF'><u>bool</u></font> ownview <font color='#5555FF'>=</font> <font color='#979000'>true</font><font face='Lucida Console'>)</font>
+    : buffer_info<font face='Lucida Console'>(</font>view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>buf, view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>itemsize, view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>format, view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ndim,
+            <b>{</b>view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>shape, view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>shape <font color='#5555FF'>+</font> view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ndim<b>}</b>, <b>{</b>view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>strides, view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>strides <font color='#5555FF'>+</font> view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ndim<b>}</b><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>this</font><font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>view <font color='#5555FF'>=</font> view;
+        <font color='#0000FF'>this</font><font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ownview <font color='#5555FF'>=</font> ownview;
+    <b>}</b>
+
+    <b><a name='buffer_info'></a>buffer_info</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> buffer_info <font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+    buffer_info<font color='#5555FF'>&amp;</font> <b><a name='operator'></a>operator</b><font color='#5555FF'>=</font><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> buffer_info <font color='#5555FF'>&amp;</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#0000FF'>delete</font>;
+
+    <b><a name='buffer_info'></a>buffer_info</b><font face='Lucida Console'>(</font>buffer_info <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>other<font face='Lucida Console'>)</font> <b>{</b>
+        <font face='Lucida Console'>(</font><font color='#5555FF'>*</font><font color='#0000FF'>this</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>other<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    buffer_info<font color='#5555FF'>&amp;</font> <b><a name='operator'></a>operator</b><font color='#5555FF'>=</font><font face='Lucida Console'>(</font>buffer_info <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>rhs<font face='Lucida Console'>)</font> <b>{</b>
+        ptr <font color='#5555FF'>=</font> rhs.ptr;
+        itemsize <font color='#5555FF'>=</font> rhs.itemsize;
+        size <font color='#5555FF'>=</font> rhs.size;
+        format <font color='#5555FF'>=</font> std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>rhs.format<font face='Lucida Console'>)</font>;
+        ndim <font color='#5555FF'>=</font> rhs.ndim;
+        shape <font color='#5555FF'>=</font> std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>rhs.shape<font face='Lucida Console'>)</font>;
+        strides <font color='#5555FF'>=</font> std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>rhs.strides<font face='Lucida Console'>)</font>;
+        std::<font color='#BB00BB'>swap</font><font face='Lucida Console'>(</font>view, rhs.view<font face='Lucida Console'>)</font>;
+        std::<font color='#BB00BB'>swap</font><font face='Lucida Console'>(</font>ownview, rhs.ownview<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> <font color='#5555FF'>*</font><font color='#0000FF'>this</font>;
+    <b>}</b>
+
+    ~<b><a name='buffer_info'></a>buffer_info</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>view <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> ownview<font face='Lucida Console'>)</font> <b>{</b> <font color='#BB00BB'>PyBuffer_Release</font><font face='Lucida Console'>(</font>view<font face='Lucida Console'>)</font>; <font color='#0000FF'>delete</font> view; <b>}</b>
+    <b>}</b>
+
+<font color='#0000FF'>private</font>:
+    <font color='#0000FF'>struct</font> <b><a name='private_ctr_tag'></a>private_ctr_tag</b> <b>{</b> <b>}</b>;
+
+    <b><a name='buffer_info'></a>buffer_info</b><font face='Lucida Console'>(</font>private_ctr_tag, <font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font>ptr, ssize_t itemsize, <font color='#0000FF'>const</font> std::string <font color='#5555FF'>&amp;</font>format, ssize_t ndim,
+                detail::any_container<font color='#5555FF'>&lt;</font>ssize_t<font color='#5555FF'>&gt;</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>shape_in, detail::any_container<font color='#5555FF'>&lt;</font>ssize_t<font color='#5555FF'>&gt;</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font>strides_in<font face='Lucida Console'>)</font>
+    : buffer_info<font face='Lucida Console'>(</font>ptr, itemsize, format, ndim, std::move<font face='Lucida Console'>(</font>shape_in<font face='Lucida Console'>)</font>, std::move<font face='Lucida Console'>(</font>strides_in<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b> <b>}</b>
+
+    Py_buffer <font color='#5555FF'>*</font>view <font color='#5555FF'>=</font> nullptr;
+    <font color='#0000FF'><u>bool</u></font> ownview <font color='#5555FF'>=</font> <font color='#979000'>false</font>;
+<b>}</b>;
+
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T, <font color='#0000FF'>typename</font> SFINAE <font color='#5555FF'>=</font> <font color='#0000FF'><u>void</u></font><font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='compare_buffer_info'></a>compare_buffer_info</b> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>bool</u></font> <b><a name='compare'></a>compare</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> buffer_info<font color='#5555FF'>&amp;</font> b<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>return</font> b.format <font color='#5555FF'>=</font><font color='#5555FF'>=</font> format_descriptor<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font>::<font color='#BB00BB'>format</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> b.itemsize <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>ssize_t<font face='Lucida Console'>)</font> <font color='#0000FF'>sizeof</font><font face='Lucida Console'>(</font>T<font face='Lucida Console'>)</font>;
+    <b>}</b>
+<b>}</b>;
+
+<font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>struct</font> <b><a name='compare_buffer_info'></a>compare_buffer_info</b><font color='#5555FF'>&lt;</font>T, detail::enable_if_t<font color='#5555FF'>&lt;</font>std::is_integral<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font>::value<font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font> <b>{</b>
+    <font color='#0000FF'>static</font> <font color='#0000FF'><u>bool</u></font> <b><a name='compare'></a>compare</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> buffer_info<font color='#5555FF'>&amp;</font> b<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>return</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font><font face='Lucida Console'>)</font> b.itemsize <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#0000FF'>sizeof</font><font face='Lucida Console'>(</font>T<font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font face='Lucida Console'>(</font>b.format <font color='#5555FF'>=</font><font color='#5555FF'>=</font> format_descriptor<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font>::value <font color='#5555FF'>|</font><font color='#5555FF'>|</font>
+            <font face='Lucida Console'>(</font><font face='Lucida Console'>(</font><font color='#0000FF'>sizeof</font><font face='Lucida Console'>(</font>T<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#0000FF'>sizeof</font><font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> b.format <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>std::is_unsigned<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font>::value ? "<font color='#CC0000'>L</font>" : "<font color='#CC0000'>l</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <font color='#5555FF'>|</font><font color='#5555FF'>|</font>
+            <font face='Lucida Console'>(</font><font face='Lucida Console'>(</font><font color='#0000FF'>sizeof</font><font face='Lucida Console'>(</font>T<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#0000FF'>sizeof</font><font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> b.format <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>std::is_unsigned<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font>::value ? "<font color='#CC0000'>N</font>" : "<font color='#CC0000'>n</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+<b>}</b>;
+
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+
+</pre></body></html>

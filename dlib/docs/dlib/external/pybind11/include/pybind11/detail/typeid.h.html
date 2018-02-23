@@ -1,0 +1,56 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - typeid.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>/*
+    pybind11/detail/typeid.h: Compiler-independent access to type identifiers
+
+    Copyright (c) 2016 Wenzel Jakob &lt;wenzel.jakob@epfl.ch&gt;
+
+    All rights reserved. Use of this source code is governed by a
+    BSD-style license that can be found in the LICENSE file.
+*/</font>
+
+<font color='#0000FF'>#pragma</font> once
+
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>cstdio<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>cstdlib<font color='#5555FF'>&gt;</font>
+
+<font color='#0000FF'>#if</font> defined<font face='Lucida Console'>(</font>__GNUG__<font face='Lucida Console'>)</font>
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>cxxabi.h<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#endif</font>
+
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+<font color='#009900'>/// Erase all occurrences of a substring
+</font><font color='#0000FF'>inline</font> <font color='#0000FF'><u>void</u></font> <b><a name='erase_all'></a>erase_all</b><font face='Lucida Console'>(</font>std::string <font color='#5555FF'>&amp;</font>string, <font color='#0000FF'>const</font> std::string <font color='#5555FF'>&amp;</font>search<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>size_t</u></font> pos <font color='#5555FF'>=</font> <font color='#979000'>0</font>;;<font face='Lucida Console'>)</font> <b>{</b>
+        pos <font color='#5555FF'>=</font> string.<font color='#BB00BB'>find</font><font face='Lucida Console'>(</font>search, pos<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>pos <font color='#5555FF'>=</font><font color='#5555FF'>=</font> std::string::npos<font face='Lucida Console'>)</font> <font color='#0000FF'>break</font>;
+        string.<font color='#BB00BB'>erase</font><font face='Lucida Console'>(</font>pos, search.<font color='#BB00BB'>length</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+<b>}</b>
+
+PYBIND11_NOINLINE <font color='#0000FF'>inline</font> <font color='#0000FF'><u>void</u></font> <b><a name='clean_type_id'></a>clean_type_id</b><font face='Lucida Console'>(</font>std::string <font color='#5555FF'>&amp;</font>name<font face='Lucida Console'>)</font> <b>{</b>
+<font color='#0000FF'>#if</font> defined<font face='Lucida Console'>(</font>__GNUG__<font face='Lucida Console'>)</font>
+    <font color='#0000FF'><u>int</u></font> status <font color='#5555FF'>=</font> <font color='#979000'>0</font>;
+    std::unique_ptr<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>char</u></font>, <font color='#0000FF'><u>void</u></font> <font face='Lucida Console'>(</font><font color='#5555FF'>*</font><font face='Lucida Console'>)</font><font face='Lucida Console'>(</font><font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font><font face='Lucida Console'>)</font><font color='#5555FF'>&gt;</font> res <b>{</b>
+        abi::<font color='#BB00BB'>__cxa_demangle</font><font face='Lucida Console'>(</font>name.<font color='#BB00BB'>c_str</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, nullptr, nullptr, <font color='#5555FF'>&amp;</font>status<font face='Lucida Console'>)</font>, std::free <b>}</b>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>status <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+        name <font color='#5555FF'>=</font> res.<font color='#BB00BB'>get</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#else</font>
+    detail::<font color='#BB00BB'>erase_all</font><font face='Lucida Console'>(</font>name, "<font color='#CC0000'>class </font>"<font face='Lucida Console'>)</font>;
+    detail::<font color='#BB00BB'>erase_all</font><font face='Lucida Console'>(</font>name, "<font color='#CC0000'>struct </font>"<font face='Lucida Console'>)</font>;
+    detail::<font color='#BB00BB'>erase_all</font><font face='Lucida Console'>(</font>name, "<font color='#CC0000'>enum </font>"<font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#endif</font>
+    detail::<font color='#BB00BB'>erase_all</font><font face='Lucida Console'>(</font>name, "<font color='#CC0000'>pybind11::</font>"<font face='Lucida Console'>)</font>;
+<b>}</b>
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+
+<font color='#009900'>/// Return a string representation of a C++ type
+</font><font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> T<font color='#5555FF'>&gt;</font> <font color='#0000FF'>static</font> std::string <b><a name='type_id'></a>type_id</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b>
+    std::string <font color='#BB00BB'>name</font><font face='Lucida Console'>(</font><font color='#0000FF'>typeid</font><font face='Lucida Console'>(</font>T<font face='Lucida Console'>)</font>.<font color='#BB00BB'>name</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    detail::<font color='#BB00BB'>clean_type_id</font><font face='Lucida Console'>(</font>name<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> name;
+<b>}</b>
+
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+
+</pre></body></html>

@@ -1,0 +1,625 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - class.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>/*
+    pybind11/detail/class.h: Python C API implementation details for py::class_
+
+    Copyright (c) 2017 Wenzel Jakob &lt;wenzel.jakob@epfl.ch&gt;
+
+    All rights reserved. Use of this source code is governed by a
+    BSD-style license that can be found in the LICENSE file.
+*/</font>
+
+<font color='#0000FF'>#pragma</font> once
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='../attr.h.html'>../attr.h</a>"
+
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+<b><a name='NAMESPACE_BEGIN'></a>NAMESPACE_BEGIN</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+
+<font color='#0000FF'>#if</font> PY_VERSION_HEX <font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font> <font color='#979000'>0x03030000</font>
+#  define PYBIND11_BUILTIN_QUALNAME
+#  define <b><a name='PYBIND11_SET_OLDPY_QUALNAME'></a>PYBIND11_SET_OLDPY_QUALNAME</b><font face='Lucida Console'>(</font>obj, nameobj<font face='Lucida Console'>)</font>
+<font color='#0000FF'>#else</font>
+<font color='#009900'>// In pre-3.3 Python, we still set __qualname__ so that we can produce reliable function type
+</font><font color='#009900'>// signatures; in 3.3+ this macro expands to nothing:
+</font>#  define <b><a name='PYBIND11_SET_OLDPY_QUALNAME'></a>PYBIND11_SET_OLDPY_QUALNAME</b><font face='Lucida Console'>(</font>obj, nameobj<font face='Lucida Console'>)</font> <b><a name='setattr'></a>setattr</b><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> obj, "<font color='#CC0000'>__qualname__</font>", nameobj<font face='Lucida Console'>)</font>
+<font color='#0000FF'>#endif</font>
+
+<font color='#0000FF'>inline</font> PyTypeObject <font color='#5555FF'>*</font><b><a name='type_incref'></a>type_incref</b><font face='Lucida Console'>(</font>PyTypeObject <font color='#5555FF'>*</font>type<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#BB00BB'>Py_INCREF</font><font face='Lucida Console'>(</font>type<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> type;
+<b>}</b>
+
+<font color='#0000FF'>#if</font> <font color='#5555FF'>!</font>defined<font face='Lucida Console'>(</font>PYPY_VERSION<font face='Lucida Console'>)</font>
+
+<font color='#009900'>/// `pybind11_static_property.__get__()`: Always pass the class instead of the instance.
+</font><font color='#0000FF'>extern</font> "<font color='#CC0000'>C</font>" <font color='#0000FF'>inline</font> PyObject <font color='#5555FF'>*</font><b><a name='pybind11_static_get'></a>pybind11_static_get</b><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>self, PyObject <font color='#5555FF'>*</font> <font color='#009900'>/*ob*/</font>, PyObject <font color='#5555FF'>*</font>cls<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>return</font> PyProperty_Type.<b><a name='tp_descr_get'></a>tp_descr_get</b><font face='Lucida Console'>(</font>self, cls, cls<font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#009900'>/// `pybind11_static_property.__set__()`: Just like the above `__get__()`.
+</font><font color='#0000FF'>extern</font> "<font color='#CC0000'>C</font>" <font color='#0000FF'>inline</font> <font color='#0000FF'><u>int</u></font> <b><a name='pybind11_static_set'></a>pybind11_static_set</b><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>self, PyObject <font color='#5555FF'>*</font>obj, PyObject <font color='#5555FF'>*</font>value<font face='Lucida Console'>)</font> <b>{</b>
+    PyObject <font color='#5555FF'>*</font>cls <font color='#5555FF'>=</font> <b><a name='PyType_Check'></a>PyType_Check</b><font face='Lucida Console'>(</font>obj<font face='Lucida Console'>)</font> ? obj : <font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> <b><a name='Py_TYPE'></a>Py_TYPE</b><font face='Lucida Console'>(</font>obj<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> PyProperty_Type.<b><a name='tp_descr_set'></a>tp_descr_set</b><font face='Lucida Console'>(</font>self, cls, value<font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#009900'>/** A `static_property` is the same as a `property` but the `__get__()` and `__set__()`
+    methods are modified to always use the object type instead of a concrete instance.
+    Return value: New reference. */</font>
+<font color='#0000FF'>inline</font> PyTypeObject <font color='#5555FF'>*</font><b><a name='make_static_property_type'></a>make_static_property_type</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b>
+    constexpr <font color='#0000FF'>auto</font> <font color='#5555FF'>*</font>name <font color='#5555FF'>=</font> "<font color='#CC0000'>pybind11_static_property</font>";
+    <font color='#0000FF'>auto</font> name_obj <font color='#5555FF'>=</font> reinterpret_steal<font color='#5555FF'>&lt;</font>object<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font color='#BB00BB'>PYBIND11_FROM_STRING</font><font face='Lucida Console'>(</font>name<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+    <font color='#009900'>/* Danger zone: from now (and until PyType_Ready), make sure to
+       issue no Python C API calls which could potentially invoke the
+       garbage collector (the GC will call type_traverse(), which will in
+       turn find the newly constructed type in an invalid state) */</font>
+    <font color='#0000FF'>auto</font> heap_type <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>PyHeapTypeObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> PyType_Type.<font color='#BB00BB'>tp_alloc</font><font face='Lucida Console'>(</font><font color='#5555FF'>&amp;</font>PyType_Type, <font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>heap_type<font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>make_static_property_type(): error allocating type!</font>"<font face='Lucida Console'>)</font>;
+
+    heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_name <font color='#5555FF'>=</font> name_obj.<font color='#BB00BB'>inc_ref</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#ifdef</font> PYBIND11_BUILTIN_QUALNAME
+    heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_qualname <font color='#5555FF'>=</font> name_obj.<font color='#BB00BB'>inc_ref</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#endif</font>
+
+    <font color='#0000FF'>auto</font> type <font color='#5555FF'>=</font> <font color='#5555FF'>&amp;</font>heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_type;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_name <font color='#5555FF'>=</font> name;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_base <font color='#5555FF'>=</font> <font color='#BB00BB'>type_incref</font><font face='Lucida Console'>(</font><font color='#5555FF'>&amp;</font>PyProperty_Type<font face='Lucida Console'>)</font>;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_flags <font color='#5555FF'>=</font> Py_TPFLAGS_DEFAULT <font color='#5555FF'>|</font> Py_TPFLAGS_BASETYPE <font color='#5555FF'>|</font> Py_TPFLAGS_HEAPTYPE;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_descr_get <font color='#5555FF'>=</font> pybind11_static_get;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_descr_set <font color='#5555FF'>=</font> pybind11_static_set;
+
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#BB00BB'>PyType_Ready</font><font face='Lucida Console'>(</font>type<font face='Lucida Console'>)</font> <font color='#5555FF'>&lt;</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>make_static_property_type(): failure in PyType_Ready()!</font>"<font face='Lucida Console'>)</font>;
+
+    <font color='#BB00BB'>setattr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> type, "<font color='#CC0000'>__module__</font>", <font color='#BB00BB'>str</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>pybind11_builtins</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <font color='#BB00BB'>PYBIND11_SET_OLDPY_QUALNAME</font><font face='Lucida Console'>(</font>type, name_obj<font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>return</font> type;
+<b>}</b>
+
+<font color='#0000FF'>#else</font> <font color='#009900'>// PYPY
+</font>
+<font color='#009900'>/** PyPy has some issues with the above C API, so we evaluate Python code instead.
+    This function will only be called once so performance isn't really a concern.
+    Return value: New reference. */</font>
+<font color='#0000FF'>inline</font> PyTypeObject <font color='#5555FF'>*</font><b><a name='make_static_property_type'></a>make_static_property_type</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>auto</font> d <font color='#5555FF'>=</font> <font color='#BB00BB'>dict</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    PyObject <font color='#5555FF'>*</font>result <font color='#5555FF'>=</font> <font color='#BB00BB'>PyRun_String</font><font face='Lucida Console'>(</font>R"<font color='#CC0000'>(\
+        class pybind11_static_property(property):
+            def __get__(self, obj, cls):
+                return property.__get__(self, cls, cls)
+
+            def __set__(self, obj, value):
+                cls = obj if isinstance(obj, type) else type(obj)
+                property.__set__(self, cls, value)
+        )</font>", Py_file_input, d.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, d.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>
+    <font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>result <font color='#5555FF'>=</font><font color='#5555FF'>=</font> nullptr<font face='Lucida Console'>)</font>
+        <font color='#0000FF'>throw</font> <font color='#BB00BB'>error_already_set</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <font color='#BB00BB'>Py_DECREF</font><font face='Lucida Console'>(</font>result<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> <font face='Lucida Console'>(</font>PyTypeObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> d["<font color='#CC0000'>pybind11_static_property</font>"].cast<font color='#5555FF'>&lt;</font>object<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>release</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#0000FF'>#endif</font> <font color='#009900'>// PYPY
+</font>
+<font color='#009900'>/** Types with static properties need to handle `Type.static_prop = x` in a specific way.
+    By default, Python replaces the `static_property` itself, but for wrapped C++ types
+    we need to call `static_property.__set__()` in order to propagate the new value to
+    the underlying C++ data structure. */</font>
+<font color='#0000FF'>extern</font> "<font color='#CC0000'>C</font>" <font color='#0000FF'>inline</font> <font color='#0000FF'><u>int</u></font> <b><a name='pybind11_meta_setattro'></a>pybind11_meta_setattro</b><font face='Lucida Console'>(</font>PyObject<font color='#5555FF'>*</font> obj, PyObject<font color='#5555FF'>*</font> name, PyObject<font color='#5555FF'>*</font> value<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#009900'>// Use `_PyType_Lookup()` instead of `PyObject_GetAttr()` in order to get the raw
+</font>    <font color='#009900'>// descriptor (`property`) instead of calling `tp_descr_get` (`property.__get__()`).
+</font>    PyObject <font color='#5555FF'>*</font>descr <font color='#5555FF'>=</font> <b><a name='_PyType_Lookup'></a>_PyType_Lookup</b><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyTypeObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> obj, name<font face='Lucida Console'>)</font>;
+
+    <font color='#009900'>// The following assignment combinations are possible:
+</font>    <font color='#009900'>//   1. `Type.static_prop = value`             --&gt; descr_set: `Type.static_prop.__set__(value)`
+</font>    <font color='#009900'>//   2. `Type.static_prop = other_static_prop` --&gt; setattro:  replace existing `static_prop`
+</font>    <font color='#009900'>//   3. `Type.regular_attribute = value`       --&gt; setattro:  regular attribute assignment
+</font>    <font color='#0000FF'>const</font> <font color='#0000FF'>auto</font> static_prop <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> <b><a name='get_internals'></a>get_internals</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.static_property_type;
+    <font color='#0000FF'>const</font> <font color='#0000FF'>auto</font> call_descr_set <font color='#5555FF'>=</font> descr <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <b><a name='PyObject_IsInstance'></a>PyObject_IsInstance</b><font face='Lucida Console'>(</font>descr, static_prop<font face='Lucida Console'>)</font>
+                                <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font color='#5555FF'>!</font><b><a name='PyObject_IsInstance'></a>PyObject_IsInstance</b><font face='Lucida Console'>(</font>value, static_prop<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>call_descr_set<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#009900'>// Call `static_property.__set__()` instead of replacing the `static_property`.
+</font><font color='#0000FF'>#if</font> <font color='#5555FF'>!</font>defined<font face='Lucida Console'>(</font>PYPY_VERSION<font face='Lucida Console'>)</font>
+        <font color='#0000FF'>return</font> <font color='#BB00BB'>Py_TYPE</font><font face='Lucida Console'>(</font>descr<font face='Lucida Console'>)</font><font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font><font color='#BB00BB'>tp_descr_set</font><font face='Lucida Console'>(</font>descr, obj, value<font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#else</font>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>result <font color='#5555FF'>=</font> <font color='#BB00BB'>PyObject_CallMethod</font><font face='Lucida Console'>(</font>descr, "<font color='#CC0000'>__set__</font>", "<font color='#CC0000'>OO</font>", obj, value<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+            <font color='#BB00BB'>Py_DECREF</font><font face='Lucida Console'>(</font>result<font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>return</font> <font color='#979000'>0</font>;
+        <b>}</b> <font color='#0000FF'>else</font> <b>{</b>
+            <font color='#0000FF'>return</font> <font color='#5555FF'>-</font><font color='#979000'>1</font>;
+        <b>}</b>
+<font color='#0000FF'>#endif</font>
+    <b>}</b> <font color='#0000FF'>else</font> <b>{</b>
+        <font color='#009900'>// Replace existing attribute.
+</font>        <font color='#0000FF'>return</font> PyType_Type.<font color='#BB00BB'>tp_setattro</font><font face='Lucida Console'>(</font>obj, name, value<font face='Lucida Console'>)</font>;
+    <b>}</b>
+<b>}</b>
+
+<font color='#0000FF'>#if</font> PY_MAJOR_VERSION <font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font> <font color='#979000'>3</font>
+<font color='#009900'>/**
+ * Python 3's PyInstanceMethod_Type hides itself via its tp_descr_get, which prevents aliasing
+ * methods via cls.attr("m2") = cls.attr("m1"): instead the tp_descr_get returns a plain function,
+ * when called on a class, or a PyMethod, when called on an instance.  Override that behaviour here
+ * to do a special case bypass for PyInstanceMethod_Types.
+ */</font>
+<font color='#0000FF'>extern</font> "<font color='#CC0000'>C</font>" <font color='#0000FF'>inline</font> PyObject <font color='#5555FF'>*</font><b><a name='pybind11_meta_getattro'></a>pybind11_meta_getattro</b><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>obj, PyObject <font color='#5555FF'>*</font>name<font face='Lucida Console'>)</font> <b>{</b>
+    PyObject <font color='#5555FF'>*</font>descr <font color='#5555FF'>=</font> <b><a name='_PyType_Lookup'></a>_PyType_Lookup</b><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyTypeObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> obj, name<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>descr <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font color='#BB00BB'>PyInstanceMethod_Check</font><font face='Lucida Console'>(</font>descr<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#BB00BB'>Py_INCREF</font><font face='Lucida Console'>(</font>descr<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> descr;
+    <b>}</b>
+    <font color='#0000FF'>else</font> <b>{</b>
+        <font color='#0000FF'>return</font> PyType_Type.<font color='#BB00BB'>tp_getattro</font><font face='Lucida Console'>(</font>obj, name<font face='Lucida Console'>)</font>;
+    <b>}</b>
+<b>}</b>
+<font color='#0000FF'>#endif</font>
+
+<font color='#009900'>/** This metaclass is assigned by default to all pybind11 types and is required in order
+    for static properties to function correctly. Users may override this using `py::metaclass`.
+    Return value: New reference. */</font>
+<font color='#0000FF'>inline</font> PyTypeObject<font color='#5555FF'>*</font> <b><a name='make_default_metaclass'></a>make_default_metaclass</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <b>{</b>
+    constexpr <font color='#0000FF'>auto</font> <font color='#5555FF'>*</font>name <font color='#5555FF'>=</font> "<font color='#CC0000'>pybind11_type</font>";
+    <font color='#0000FF'>auto</font> name_obj <font color='#5555FF'>=</font> reinterpret_steal<font color='#5555FF'>&lt;</font>object<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font color='#BB00BB'>PYBIND11_FROM_STRING</font><font face='Lucida Console'>(</font>name<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+    <font color='#009900'>/* Danger zone: from now (and until PyType_Ready), make sure to
+       issue no Python C API calls which could potentially invoke the
+       garbage collector (the GC will call type_traverse(), which will in
+       turn find the newly constructed type in an invalid state) */</font>
+    <font color='#0000FF'>auto</font> heap_type <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>PyHeapTypeObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> PyType_Type.<font color='#BB00BB'>tp_alloc</font><font face='Lucida Console'>(</font><font color='#5555FF'>&amp;</font>PyType_Type, <font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>heap_type<font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>make_default_metaclass(): error allocating metaclass!</font>"<font face='Lucida Console'>)</font>;
+
+    heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_name <font color='#5555FF'>=</font> name_obj.<font color='#BB00BB'>inc_ref</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#ifdef</font> PYBIND11_BUILTIN_QUALNAME
+    heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_qualname <font color='#5555FF'>=</font> name_obj.<font color='#BB00BB'>inc_ref</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#endif</font>
+
+    <font color='#0000FF'>auto</font> type <font color='#5555FF'>=</font> <font color='#5555FF'>&amp;</font>heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_type;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_name <font color='#5555FF'>=</font> name;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_base <font color='#5555FF'>=</font> <font color='#BB00BB'>type_incref</font><font face='Lucida Console'>(</font><font color='#5555FF'>&amp;</font>PyType_Type<font face='Lucida Console'>)</font>;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_flags <font color='#5555FF'>=</font> Py_TPFLAGS_DEFAULT <font color='#5555FF'>|</font> Py_TPFLAGS_BASETYPE <font color='#5555FF'>|</font> Py_TPFLAGS_HEAPTYPE;
+
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_setattro <font color='#5555FF'>=</font> pybind11_meta_setattro;
+<font color='#0000FF'>#if</font> PY_MAJOR_VERSION <font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font> <font color='#979000'>3</font>
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_getattro <font color='#5555FF'>=</font> pybind11_meta_getattro;
+<font color='#0000FF'>#endif</font>
+
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#BB00BB'>PyType_Ready</font><font face='Lucida Console'>(</font>type<font face='Lucida Console'>)</font> <font color='#5555FF'>&lt;</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>make_default_metaclass(): failure in PyType_Ready()!</font>"<font face='Lucida Console'>)</font>;
+
+    <font color='#BB00BB'>setattr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> type, "<font color='#CC0000'>__module__</font>", <font color='#BB00BB'>str</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>pybind11_builtins</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <font color='#BB00BB'>PYBIND11_SET_OLDPY_QUALNAME</font><font face='Lucida Console'>(</font>type, name_obj<font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>return</font> type;
+<b>}</b>
+
+<font color='#009900'>/// For multiple inheritance types we need to recursively register/deregister base pointers for any
+</font><font color='#009900'>/// base classes with pointers that are difference from the instance value pointer so that we can
+</font><font color='#009900'>/// correctly recognize an offset base class pointer. This calls a function with any offset base ptrs.
+</font><font color='#0000FF'>inline</font> <font color='#0000FF'><u>void</u></font> <b><a name='traverse_offset_bases'></a>traverse_offset_bases</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font>valueptr, <font color='#0000FF'>const</font> detail::type_info <font color='#5555FF'>*</font>tinfo, instance <font color='#5555FF'>*</font>self,
+        <font color='#0000FF'><u>bool</u></font> <font face='Lucida Console'>(</font><font color='#5555FF'>*</font>f<font face='Lucida Console'>)</font><font face='Lucida Console'>(</font><font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font> <font color='#009900'>/*parentptr*/</font>, instance <font color='#5555FF'>*</font> <font color='#009900'>/*self*/</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font>handle h : reinterpret_borrow<font color='#5555FF'>&lt;</font>tuple<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>tinfo<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_bases<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font> parent_tinfo <font color='#5555FF'>=</font> <font color='#BB00BB'>get_type_info</font><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyTypeObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> h.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+            <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font> <font color='#5555FF'>&amp;</font>c : parent_tinfo<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>implicit_casts<font face='Lucida Console'>)</font> <b>{</b>
+                <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>c.first <font color='#5555FF'>=</font><font color='#5555FF'>=</font> tinfo<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>cpptype<font face='Lucida Console'>)</font> <b>{</b>
+                    <font color='#0000FF'>auto</font> <font color='#5555FF'>*</font>parentptr <font color='#5555FF'>=</font> c.<font color='#BB00BB'>second</font><font face='Lucida Console'>(</font>valueptr<font face='Lucida Console'>)</font>;
+                    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>parentptr <font color='#5555FF'>!</font><font color='#5555FF'>=</font> valueptr<font face='Lucida Console'>)</font>
+                        <font color='#BB00BB'>f</font><font face='Lucida Console'>(</font>parentptr, self<font face='Lucida Console'>)</font>;
+                    <font color='#BB00BB'>traverse_offset_bases</font><font face='Lucida Console'>(</font>parentptr, parent_tinfo, self, f<font face='Lucida Console'>)</font>;
+                    <font color='#0000FF'>break</font>;
+                <b>}</b>
+            <b>}</b>
+        <b>}</b>
+    <b>}</b>
+<b>}</b>
+
+<font color='#0000FF'>inline</font> <font color='#0000FF'><u>bool</u></font> <b><a name='register_instance_impl'></a>register_instance_impl</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font>ptr, instance <font color='#5555FF'>*</font>self<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#BB00BB'>get_internals</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.registered_instances.<font color='#BB00BB'>emplace</font><font face='Lucida Console'>(</font>ptr, self<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> <font color='#979000'>true</font>; <font color='#009900'>// unused, but gives the same signature as the deregister func
+</font><b>}</b>
+<font color='#0000FF'>inline</font> <font color='#0000FF'><u>bool</u></font> <b><a name='deregister_instance_impl'></a>deregister_instance_impl</b><font face='Lucida Console'>(</font><font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font>ptr, instance <font color='#5555FF'>*</font>self<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>auto</font> <font color='#5555FF'>&amp;</font>registered_instances <font color='#5555FF'>=</font> <font color='#BB00BB'>get_internals</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.registered_instances;
+    <font color='#0000FF'>auto</font> range <font color='#5555FF'>=</font> registered_instances.<font color='#BB00BB'>equal_range</font><font face='Lucida Console'>(</font>ptr<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font> it <font color='#5555FF'>=</font> range.first; it <font color='#5555FF'>!</font><font color='#5555FF'>=</font> range.second; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>it<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#BB00BB'>Py_TYPE</font><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#BB00BB'>Py_TYPE</font><font face='Lucida Console'>(</font>it<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>second<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+            registered_instances.<font color='#BB00BB'>erase</font><font face='Lucida Console'>(</font>it<font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>return</font> <font color='#979000'>true</font>;
+        <b>}</b>
+    <b>}</b>
+    <font color='#0000FF'>return</font> <font color='#979000'>false</font>;
+<b>}</b>
+
+<font color='#0000FF'>inline</font> <font color='#0000FF'><u>void</u></font> <b><a name='register_instance'></a>register_instance</b><font face='Lucida Console'>(</font>instance <font color='#5555FF'>*</font>self, <font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font>valptr, <font color='#0000FF'>const</font> type_info <font color='#5555FF'>*</font>tinfo<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#BB00BB'>register_instance_impl</font><font face='Lucida Console'>(</font>valptr, self<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>tinfo<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>simple_ancestors<font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>traverse_offset_bases</font><font face='Lucida Console'>(</font>valptr, tinfo, self, register_instance_impl<font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#0000FF'>inline</font> <font color='#0000FF'><u>bool</u></font> <b><a name='deregister_instance'></a>deregister_instance</b><font face='Lucida Console'>(</font>instance <font color='#5555FF'>*</font>self, <font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font>valptr, <font color='#0000FF'>const</font> type_info <font color='#5555FF'>*</font>tinfo<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'><u>bool</u></font> ret <font color='#5555FF'>=</font> <font color='#BB00BB'>deregister_instance_impl</font><font face='Lucida Console'>(</font>valptr, self<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>tinfo<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>simple_ancestors<font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>traverse_offset_bases</font><font face='Lucida Console'>(</font>valptr, tinfo, self, deregister_instance_impl<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> ret;
+<b>}</b>
+
+<font color='#009900'>/// Instance creation function for all pybind11 types. It allocates the internal instance layout for
+</font><font color='#009900'>/// holding C++ objects and holders.  Allocation is done lazily (the first time the instance is cast
+</font><font color='#009900'>/// to a reference or pointer), and initialization is done by an `__init__` function.
+</font><font color='#0000FF'>inline</font> PyObject <font color='#5555FF'>*</font><b><a name='make_new_instance'></a>make_new_instance</b><font face='Lucida Console'>(</font>PyTypeObject <font color='#5555FF'>*</font>type<font face='Lucida Console'>)</font> <b>{</b>
+<font color='#0000FF'>#if</font> defined<font face='Lucida Console'>(</font>PYPY_VERSION<font face='Lucida Console'>)</font>
+    <font color='#009900'>// PyPy gets tp_basicsize wrong (issue 2482) under multiple inheritance when the first inherited
+</font>    <font color='#009900'>// object is a a plain Python type (i.e. not derived from an extension type).  Fix it.
+</font>    ssize_t instance_size <font color='#5555FF'>=</font> <font color='#0000FF'>static_cast</font><font color='#5555FF'>&lt;</font>ssize_t<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font color='#0000FF'>sizeof</font><font face='Lucida Console'>(</font>instance<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_basicsize <font color='#5555FF'>&lt;</font> instance_size<font face='Lucida Console'>)</font> <b>{</b>
+        type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_basicsize <font color='#5555FF'>=</font> instance_size;
+    <b>}</b>
+<font color='#0000FF'>#endif</font>
+    PyObject <font color='#5555FF'>*</font>self <font color='#5555FF'>=</font> type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font><font color='#BB00BB'>tp_alloc</font><font face='Lucida Console'>(</font>type, <font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>auto</font> inst <font color='#5555FF'>=</font> <font color='#0000FF'>reinterpret_cast</font><font color='#5555FF'>&lt;</font>instance <font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+    <font color='#009900'>// Allocate the value/holder internals:
+</font>    inst<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font><font color='#BB00BB'>allocate_layout</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+
+    inst<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>owned <font color='#5555FF'>=</font> <font color='#979000'>true</font>;
+
+    <font color='#0000FF'>return</font> self;
+<b>}</b>
+
+<font color='#009900'>/// Instance creation function for all pybind11 types. It only allocates space for the
+</font><font color='#009900'>/// C++ object, but doesn't call the constructor -- an `__init__` function must do that.
+</font><font color='#0000FF'>extern</font> "<font color='#CC0000'>C</font>" <font color='#0000FF'>inline</font> PyObject <font color='#5555FF'>*</font><b><a name='pybind11_object_new'></a>pybind11_object_new</b><font face='Lucida Console'>(</font>PyTypeObject <font color='#5555FF'>*</font>type, PyObject <font color='#5555FF'>*</font>, PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>return</font> <b><a name='make_new_instance'></a>make_new_instance</b><font face='Lucida Console'>(</font>type<font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#009900'>/// An `__init__` function constructs the C++ object. Users should provide at least one
+</font><font color='#009900'>/// of these using `py::init` or directly with `.def(__init__, ...)`. Otherwise, the
+</font><font color='#009900'>/// following default function will be used which simply throws an exception.
+</font><font color='#0000FF'>extern</font> "<font color='#CC0000'>C</font>" <font color='#0000FF'>inline</font> <font color='#0000FF'><u>int</u></font> <b><a name='pybind11_object_init'></a>pybind11_object_init</b><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>self, PyObject <font color='#5555FF'>*</font>, PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> <b>{</b>
+    PyTypeObject <font color='#5555FF'>*</font>type <font color='#5555FF'>=</font> <b><a name='Py_TYPE'></a>Py_TYPE</b><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+    std::string msg;
+<font color='#0000FF'>#if</font> defined<font face='Lucida Console'>(</font>PYPY_VERSION<font face='Lucida Console'>)</font>
+    msg <font color='#5555FF'>+</font><font color='#5555FF'>=</font> <b><a name='handle'></a>handle</b><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> type<font face='Lucida Console'>)</font>.<b><a name='attr'></a>attr</b><font face='Lucida Console'>(</font>"<font color='#CC0000'>__module__</font>"<font face='Lucida Console'>)</font>.cast<font color='#5555FF'>&lt;</font>std::string<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> "<font color='#CC0000'>.</font>";
+<font color='#0000FF'>#endif</font>
+    msg <font color='#5555FF'>+</font><font color='#5555FF'>=</font> type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_name;
+    msg <font color='#5555FF'>+</font><font color='#5555FF'>=</font> "<font color='#CC0000'>: No constructor defined!</font>";
+    <b><a name='PyErr_SetString'></a>PyErr_SetString</b><font face='Lucida Console'>(</font>PyExc_TypeError, msg.<font color='#BB00BB'>c_str</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> <font color='#5555FF'>-</font><font color='#979000'>1</font>;
+<b>}</b>
+
+<font color='#0000FF'>inline</font> <font color='#0000FF'><u>void</u></font> <b><a name='add_patient'></a>add_patient</b><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>nurse, PyObject <font color='#5555FF'>*</font>patient<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>auto</font> <font color='#5555FF'>&amp;</font>internals <font color='#5555FF'>=</font> <font color='#BB00BB'>get_internals</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>auto</font> instance <font color='#5555FF'>=</font> <font color='#0000FF'>reinterpret_cast</font><font color='#5555FF'>&lt;</font>detail::instance <font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>nurse<font face='Lucida Console'>)</font>;
+    instance<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>has_patients <font color='#5555FF'>=</font> <font color='#979000'>true</font>;
+    <font color='#BB00BB'>Py_INCREF</font><font face='Lucida Console'>(</font>patient<font face='Lucida Console'>)</font>;
+    internals.patients[nurse].<font color='#BB00BB'>push_back</font><font face='Lucida Console'>(</font>patient<font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#0000FF'>inline</font> <font color='#0000FF'><u>void</u></font> <b><a name='clear_patients'></a>clear_patients</b><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>self<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>auto</font> instance <font color='#5555FF'>=</font> <font color='#0000FF'>reinterpret_cast</font><font color='#5555FF'>&lt;</font>detail::instance <font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>auto</font> <font color='#5555FF'>&amp;</font>internals <font color='#5555FF'>=</font> <font color='#BB00BB'>get_internals</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>auto</font> pos <font color='#5555FF'>=</font> internals.patients.<font color='#BB00BB'>find</font><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+    <font color='#BB00BB'>assert</font><font face='Lucida Console'>(</font>pos <font color='#5555FF'>!</font><font color='#5555FF'>=</font> internals.patients.<font color='#BB00BB'>end</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <font color='#009900'>// Clearing the patients can cause more Python code to run, which
+</font>    <font color='#009900'>// can invalidate the iterator. Extract the vector of patients
+</font>    <font color='#009900'>// from the unordered_map first.
+</font>    <font color='#0000FF'>auto</font> patients <font color='#5555FF'>=</font> std::<font color='#BB00BB'>move</font><font face='Lucida Console'>(</font>pos<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>second<font face='Lucida Console'>)</font>;
+    internals.patients.<font color='#BB00BB'>erase</font><font face='Lucida Console'>(</font>pos<font face='Lucida Console'>)</font>;
+    instance<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>has_patients <font color='#5555FF'>=</font> <font color='#979000'>false</font>;
+    <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font><font color='#5555FF'>&amp;</font>patient : patients<font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>Py_CLEAR</font><font face='Lucida Console'>(</font>patient<font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#009900'>/// Clears all internal data from the instance and removes it from registered instances in
+</font><font color='#009900'>/// preparation for deallocation.
+</font><font color='#0000FF'>inline</font> <font color='#0000FF'><u>void</u></font> <b><a name='clear_instance'></a>clear_instance</b><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>self<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>auto</font> instance <font color='#5555FF'>=</font> <font color='#0000FF'>reinterpret_cast</font><font color='#5555FF'>&lt;</font>detail::instance <font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+
+    <font color='#009900'>// Deallocate any values/holders, if present:
+</font>    <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font> <font color='#5555FF'>&amp;</font>v_h : <font color='#BB00BB'>values_and_holders</font><font face='Lucida Console'>(</font>instance<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>v_h<font face='Lucida Console'>)</font> <b>{</b>
+
+            <font color='#009900'>// We have to deregister before we call dealloc because, for virtual MI types, we still
+</font>            <font color='#009900'>// need to be able to get the parent pointers.
+</font>            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>v_h.<font color='#BB00BB'>instance_registered</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font color='#5555FF'>!</font><font color='#BB00BB'>deregister_instance</font><font face='Lucida Console'>(</font>instance, v_h.<font color='#BB00BB'>value_ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, v_h.type<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+                <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>pybind11_object_dealloc(): Tried to deallocate unregistered instance!</font>"<font face='Lucida Console'>)</font>;
+
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>instance<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>owned <font color='#5555FF'>|</font><font color='#5555FF'>|</font> v_h.<font color='#BB00BB'>holder_constructed</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+                v_h.type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font><font color='#BB00BB'>dealloc</font><font face='Lucida Console'>(</font>v_h<font face='Lucida Console'>)</font>;
+        <b>}</b>
+    <b>}</b>
+    <font color='#009900'>// Deallocate the value/holder layout internals:
+</font>    instance<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font><font color='#BB00BB'>deallocate_layout</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>instance<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>weakrefs<font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>PyObject_ClearWeakRefs</font><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+
+    PyObject <font color='#5555FF'>*</font><font color='#5555FF'>*</font>dict_ptr <font color='#5555FF'>=</font> <font color='#BB00BB'>_PyObject_GetDictPtr</font><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>dict_ptr<font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>Py_CLEAR</font><font face='Lucida Console'>(</font><font color='#5555FF'>*</font>dict_ptr<font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>instance<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>has_patients<font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>clear_patients</font><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#009900'>/// Instance destructor function for all pybind11 types. It calls `type_info.dealloc`
+</font><font color='#009900'>/// to destroy the C++ object itself, while the rest is Python bookkeeping.
+</font><font color='#0000FF'>extern</font> "<font color='#CC0000'>C</font>" <font color='#0000FF'>inline</font> <font color='#0000FF'><u>void</u></font> <b><a name='pybind11_object_dealloc'></a>pybind11_object_dealloc</b><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>self<font face='Lucida Console'>)</font> <b>{</b>
+    <b><a name='clear_instance'></a>clear_instance</b><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>auto</font> type <font color='#5555FF'>=</font> <b><a name='Py_TYPE'></a>Py_TYPE</b><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font><b><a name='tp_free'></a>tp_free</b><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+
+    <font color='#009900'>// `type-&gt;tp_dealloc != pybind11_object_dealloc` means that we're being called
+</font>    <font color='#009900'>// as part of a derived type's dealloc, in which case we're not allowed to decref
+</font>    <font color='#009900'>// the type here. For cross-module compatibility, we shouldn't compare directly
+</font>    <font color='#009900'>// with `pybind11_object_dealloc`, but with the common one stashed in internals.
+</font>    <font color='#0000FF'>auto</font> pybind11_object_type <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>PyTypeObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> <b><a name='get_internals'></a>get_internals</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.instance_base;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_dealloc <font color='#5555FF'>=</font><font color='#5555FF'>=</font> pybind11_object_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_dealloc<font face='Lucida Console'>)</font>
+        <b><a name='Py_DECREF'></a>Py_DECREF</b><font face='Lucida Console'>(</font>type<font face='Lucida Console'>)</font>;
+<b>}</b>
+
+<font color='#009900'>/** Create the type which can be used as a common base for all classes.  This is
+    needed in order to satisfy Python's requirements for multiple inheritance.
+    Return value: New reference. */</font>
+<font color='#0000FF'>inline</font> PyObject <font color='#5555FF'>*</font><b><a name='make_object_base_type'></a>make_object_base_type</b><font face='Lucida Console'>(</font>PyTypeObject <font color='#5555FF'>*</font>metaclass<font face='Lucida Console'>)</font> <b>{</b>
+    constexpr <font color='#0000FF'>auto</font> <font color='#5555FF'>*</font>name <font color='#5555FF'>=</font> "<font color='#CC0000'>pybind11_object</font>";
+    <font color='#0000FF'>auto</font> name_obj <font color='#5555FF'>=</font> reinterpret_steal<font color='#5555FF'>&lt;</font>object<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font color='#BB00BB'>PYBIND11_FROM_STRING</font><font face='Lucida Console'>(</font>name<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+    <font color='#009900'>/* Danger zone: from now (and until PyType_Ready), make sure to
+       issue no Python C API calls which could potentially invoke the
+       garbage collector (the GC will call type_traverse(), which will in
+       turn find the newly constructed type in an invalid state) */</font>
+    <font color='#0000FF'>auto</font> heap_type <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>PyHeapTypeObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> metaclass<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font><font color='#BB00BB'>tp_alloc</font><font face='Lucida Console'>(</font>metaclass, <font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>heap_type<font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>make_object_base_type(): error allocating type!</font>"<font face='Lucida Console'>)</font>;
+
+    heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_name <font color='#5555FF'>=</font> name_obj.<font color='#BB00BB'>inc_ref</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#ifdef</font> PYBIND11_BUILTIN_QUALNAME
+    heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_qualname <font color='#5555FF'>=</font> name_obj.<font color='#BB00BB'>inc_ref</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#endif</font>
+
+    <font color='#0000FF'>auto</font> type <font color='#5555FF'>=</font> <font color='#5555FF'>&amp;</font>heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_type;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_name <font color='#5555FF'>=</font> name;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_base <font color='#5555FF'>=</font> <font color='#BB00BB'>type_incref</font><font face='Lucida Console'>(</font><font color='#5555FF'>&amp;</font>PyBaseObject_Type<font face='Lucida Console'>)</font>;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_basicsize <font color='#5555FF'>=</font> <font color='#0000FF'>static_cast</font><font color='#5555FF'>&lt;</font>ssize_t<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font color='#0000FF'>sizeof</font><font face='Lucida Console'>(</font>instance<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_flags <font color='#5555FF'>=</font> Py_TPFLAGS_DEFAULT <font color='#5555FF'>|</font> Py_TPFLAGS_BASETYPE <font color='#5555FF'>|</font> Py_TPFLAGS_HEAPTYPE;
+
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_new <font color='#5555FF'>=</font> pybind11_object_new;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_init <font color='#5555FF'>=</font> pybind11_object_init;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_dealloc <font color='#5555FF'>=</font> pybind11_object_dealloc;
+
+    <font color='#009900'>/* Support weak references (needed for the keep_alive feature) */</font>
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_weaklistoffset <font color='#5555FF'>=</font> <font color='#BB00BB'>offsetof</font><font face='Lucida Console'>(</font>instance, weakrefs<font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#BB00BB'>PyType_Ready</font><font face='Lucida Console'>(</font>type<font face='Lucida Console'>)</font> <font color='#5555FF'>&lt;</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>PyType_Ready failed in make_object_base_type():</font>" <font color='#5555FF'>+</font> <font color='#BB00BB'>error_string</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+    <font color='#BB00BB'>setattr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> type, "<font color='#CC0000'>__module__</font>", <font color='#BB00BB'>str</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>pybind11_builtins</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <font color='#BB00BB'>PYBIND11_SET_OLDPY_QUALNAME</font><font face='Lucida Console'>(</font>type, name_obj<font face='Lucida Console'>)</font>;
+
+    <font color='#BB00BB'>assert</font><font face='Lucida Console'>(</font><font color='#5555FF'>!</font><font color='#BB00BB'>PyType_HasFeature</font><font face='Lucida Console'>(</font>type, Py_TPFLAGS_HAVE_GC<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> <font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> heap_type;
+<b>}</b>
+
+<font color='#009900'>/// dynamic_attr: Support for `d = instance.__dict__`.
+</font><font color='#0000FF'>extern</font> "<font color='#CC0000'>C</font>" <font color='#0000FF'>inline</font> PyObject <font color='#5555FF'>*</font><b><a name='pybind11_get_dict'></a>pybind11_get_dict</b><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>self, <font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> <b>{</b>
+    PyObject <font color='#5555FF'>*</font><font color='#5555FF'>&amp;</font>dict <font color='#5555FF'>=</font> <font color='#5555FF'>*</font><b><a name='_PyObject_GetDictPtr'></a>_PyObject_GetDictPtr</b><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>dict<font face='Lucida Console'>)</font>
+        dict <font color='#5555FF'>=</font> <b><a name='PyDict_New'></a>PyDict_New</b><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <b><a name='Py_XINCREF'></a>Py_XINCREF</b><font face='Lucida Console'>(</font>dict<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> dict;
+<b>}</b>
+
+<font color='#009900'>/// dynamic_attr: Support for `instance.__dict__ = dict()`.
+</font><font color='#0000FF'>extern</font> "<font color='#CC0000'>C</font>" <font color='#0000FF'>inline</font> <font color='#0000FF'><u>int</u></font> <b><a name='pybind11_set_dict'></a>pybind11_set_dict</b><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>self, PyObject <font color='#5555FF'>*</font>new_dict, <font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font><font color='#BB00BB'>PyDict_Check</font><font face='Lucida Console'>(</font>new_dict<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#BB00BB'>PyErr_Format</font><font face='Lucida Console'>(</font>PyExc_TypeError, "<font color='#CC0000'>__dict__ must be set to a dictionary, not a '%.200s'</font>",
+                     <font color='#BB00BB'>Py_TYPE</font><font face='Lucida Console'>(</font>new_dict<font face='Lucida Console'>)</font><font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_name<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> <font color='#5555FF'>-</font><font color='#979000'>1</font>;
+    <b>}</b>
+    PyObject <font color='#5555FF'>*</font><font color='#5555FF'>&amp;</font>dict <font color='#5555FF'>=</font> <font color='#5555FF'>*</font><b><a name='_PyObject_GetDictPtr'></a>_PyObject_GetDictPtr</b><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+    <b><a name='Py_INCREF'></a>Py_INCREF</b><font face='Lucida Console'>(</font>new_dict<font face='Lucida Console'>)</font>;
+    <b><a name='Py_CLEAR'></a>Py_CLEAR</b><font face='Lucida Console'>(</font>dict<font face='Lucida Console'>)</font>;
+    dict <font color='#5555FF'>=</font> new_dict;
+    <font color='#0000FF'>return</font> <font color='#979000'>0</font>;
+<b>}</b>
+
+<font color='#009900'>/// dynamic_attr: Allow the garbage collector to traverse the internal instance `__dict__`.
+</font><font color='#0000FF'>extern</font> "<font color='#CC0000'>C</font>" <font color='#0000FF'>inline</font> <font color='#0000FF'><u>int</u></font> <b><a name='pybind11_traverse'></a>pybind11_traverse</b><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>self, visitproc visit, <font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font>arg<font face='Lucida Console'>)</font> <b>{</b>
+    PyObject <font color='#5555FF'>*</font><font color='#5555FF'>&amp;</font>dict <font color='#5555FF'>=</font> <font color='#5555FF'>*</font><b><a name='_PyObject_GetDictPtr'></a>_PyObject_GetDictPtr</b><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+    <b><a name='Py_VISIT'></a>Py_VISIT</b><font face='Lucida Console'>(</font>dict<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> <font color='#979000'>0</font>;
+<b>}</b>
+
+<font color='#009900'>/// dynamic_attr: Allow the GC to clear the dictionary.
+</font><font color='#0000FF'>extern</font> "<font color='#CC0000'>C</font>" <font color='#0000FF'>inline</font> <font color='#0000FF'><u>int</u></font> <b><a name='pybind11_clear'></a>pybind11_clear</b><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>self<font face='Lucida Console'>)</font> <b>{</b>
+    PyObject <font color='#5555FF'>*</font><font color='#5555FF'>&amp;</font>dict <font color='#5555FF'>=</font> <font color='#5555FF'>*</font><b><a name='_PyObject_GetDictPtr'></a>_PyObject_GetDictPtr</b><font face='Lucida Console'>(</font>self<font face='Lucida Console'>)</font>;
+    <b><a name='Py_CLEAR'></a>Py_CLEAR</b><font face='Lucida Console'>(</font>dict<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> <font color='#979000'>0</font>;
+<b>}</b>
+
+<font color='#009900'>/// Give instances of this type a `__dict__` and opt into garbage collection.
+</font><font color='#0000FF'>inline</font> <font color='#0000FF'><u>void</u></font> <b><a name='enable_dynamic_attributes'></a>enable_dynamic_attributes</b><font face='Lucida Console'>(</font>PyHeapTypeObject <font color='#5555FF'>*</font>heap_type<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>auto</font> type <font color='#5555FF'>=</font> <font color='#5555FF'>&amp;</font>heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_type;
+<font color='#0000FF'>#if</font> defined<font face='Lucida Console'>(</font>PYPY_VERSION<font face='Lucida Console'>)</font>
+    <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>string</font><font face='Lucida Console'>(</font>type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_name<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> "<font color='#CC0000'>: dynamic attributes are </font>"
+                                               "<font color='#CC0000'>currently not supported in </font>"
+                                               "<font color='#CC0000'>conjunction with PyPy!</font>"<font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#endif</font>
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_flags <font color='#5555FF'>|</font><font color='#5555FF'>=</font> Py_TPFLAGS_HAVE_GC;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_dictoffset <font color='#5555FF'>=</font> type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_basicsize; <font color='#009900'>// place dict at the end
+</font>    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_basicsize <font color='#5555FF'>+</font><font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>ssize_t<font face='Lucida Console'>)</font><font color='#0000FF'>sizeof</font><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font>; <font color='#009900'>// and allocate enough space for it
+</font>    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_traverse <font color='#5555FF'>=</font> pybind11_traverse;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_clear <font color='#5555FF'>=</font> pybind11_clear;
+
+    <font color='#0000FF'>static</font> PyGetSetDef getset[] <font color='#5555FF'>=</font> <b>{</b>
+        <b>{</b><font color='#0000FF'>const_cast</font><font color='#5555FF'>&lt;</font><font color='#0000FF'><u>char</u></font><font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>__dict__</font>"<font face='Lucida Console'>)</font>, pybind11_get_dict, pybind11_set_dict, nullptr, nullptr<b>}</b>,
+        <b>{</b>nullptr, nullptr, nullptr, nullptr, nullptr<b>}</b>
+    <b>}</b>;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_getset <font color='#5555FF'>=</font> getset;
+<b>}</b>
+
+<font color='#009900'>/// buffer_protocol: Fill in the view as specified by flags.
+</font><font color='#0000FF'>extern</font> "<font color='#CC0000'>C</font>" <font color='#0000FF'>inline</font> <font color='#0000FF'><u>int</u></font> <b><a name='pybind11_getbuffer'></a>pybind11_getbuffer</b><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>obj, Py_buffer <font color='#5555FF'>*</font>view, <font color='#0000FF'><u>int</u></font> flags<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#009900'>// Look for a `get_buffer` implementation in this type's info or any bases (following MRO).
+</font>    type_info <font color='#5555FF'>*</font>tinfo <font color='#5555FF'>=</font> nullptr;
+    <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font> type : reinterpret_borrow<font color='#5555FF'>&lt;</font>tuple<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font color='#BB00BB'>Py_TYPE</font><font face='Lucida Console'>(</font>obj<font face='Lucida Console'>)</font><font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_mro<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+        tinfo <font color='#5555FF'>=</font> <font color='#BB00BB'>get_type_info</font><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyTypeObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> type.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>tinfo <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> tinfo<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>get_buffer<font face='Lucida Console'>)</font>
+            <font color='#0000FF'>break</font>;
+    <b>}</b>
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>view <font color='#5555FF'>=</font><font color='#5555FF'>=</font> nullptr <font color='#5555FF'>|</font><font color='#5555FF'>|</font> obj <font color='#5555FF'>=</font><font color='#5555FF'>=</font> nullptr <font color='#5555FF'>|</font><font color='#5555FF'>|</font> <font color='#5555FF'>!</font>tinfo <font color='#5555FF'>|</font><font color='#5555FF'>|</font> <font color='#5555FF'>!</font>tinfo<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>get_buffer<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>view<font face='Lucida Console'>)</font>
+            view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>obj <font color='#5555FF'>=</font> nullptr;
+        <font color='#BB00BB'>PyErr_SetString</font><font face='Lucida Console'>(</font>PyExc_BufferError, "<font color='#CC0000'>pybind11_getbuffer(): Internal error</font>"<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> <font color='#5555FF'>-</font><font color='#979000'>1</font>;
+    <b>}</b>
+    std::<b><a name='memset'></a>memset</b><font face='Lucida Console'>(</font>view, <font color='#979000'>0</font>, <font color='#0000FF'>sizeof</font><font face='Lucida Console'>(</font>Py_buffer<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    buffer_info <font color='#5555FF'>*</font>info <font color='#5555FF'>=</font> tinfo<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font><b><a name='get_buffer'></a>get_buffer</b><font face='Lucida Console'>(</font>obj, tinfo<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>get_buffer_data<font face='Lucida Console'>)</font>;
+    view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>obj <font color='#5555FF'>=</font> obj;
+    view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ndim <font color='#5555FF'>=</font> <font color='#979000'>1</font>;
+    view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>internal <font color='#5555FF'>=</font> info;
+    view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>buf <font color='#5555FF'>=</font> info<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ptr;
+    view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>itemsize <font color='#5555FF'>=</font> info<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>itemsize;
+    view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>len <font color='#5555FF'>=</font> view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>itemsize;
+    <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'>auto</font> s : info<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>shape<font face='Lucida Console'>)</font>
+        view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>len <font color='#5555FF'>*</font><font color='#5555FF'>=</font> s;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>flags <font color='#5555FF'>&amp;</font> PyBUF_FORMAT<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> PyBUF_FORMAT<font face='Lucida Console'>)</font>
+        view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>format <font color='#5555FF'>=</font> <font color='#0000FF'>const_cast</font><font color='#5555FF'>&lt;</font><font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>info<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>format.<font color='#BB00BB'>c_str</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>flags <font color='#5555FF'>&amp;</font> PyBUF_STRIDES<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> PyBUF_STRIDES<font face='Lucida Console'>)</font> <b>{</b>
+        view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ndim <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>int</u></font><font face='Lucida Console'>)</font> info<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ndim;
+        view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>strides <font color='#5555FF'>=</font> <font color='#5555FF'>&amp;</font>info<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>strides[<font color='#979000'>0</font>];
+        view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>shape <font color='#5555FF'>=</font> <font color='#5555FF'>&amp;</font>info<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>shape[<font color='#979000'>0</font>];
+    <b>}</b>
+    <b><a name='Py_INCREF'></a>Py_INCREF</b><font face='Lucida Console'>(</font>view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>obj<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>return</font> <font color='#979000'>0</font>;
+<b>}</b>
+
+<font color='#009900'>/// buffer_protocol: Release the resources of the buffer.
+</font><font color='#0000FF'>extern</font> "<font color='#CC0000'>C</font>" <font color='#0000FF'>inline</font> <font color='#0000FF'><u>void</u></font> <b><a name='pybind11_releasebuffer'></a>pybind11_releasebuffer</b><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font>, Py_buffer <font color='#5555FF'>*</font>view<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>delete</font> <font face='Lucida Console'>(</font>buffer_info <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> view<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>internal;
+<b>}</b>
+
+<font color='#009900'>/// Give this type a buffer interface.
+</font><font color='#0000FF'>inline</font> <font color='#0000FF'><u>void</u></font> <b><a name='enable_buffer_protocol'></a>enable_buffer_protocol</b><font face='Lucida Console'>(</font>PyHeapTypeObject <font color='#5555FF'>*</font>heap_type<font face='Lucida Console'>)</font> <b>{</b>
+    heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_type.tp_as_buffer <font color='#5555FF'>=</font> <font color='#5555FF'>&amp;</font>heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>as_buffer;
+<font color='#0000FF'>#if</font> PY_MAJOR_VERSION <font color='#5555FF'>&lt;</font> <font color='#979000'>3</font>
+    heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_type.tp_flags <font color='#5555FF'>|</font><font color='#5555FF'>=</font> Py_TPFLAGS_HAVE_NEWBUFFER;
+<font color='#0000FF'>#endif</font>
+
+    heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>as_buffer.bf_getbuffer <font color='#5555FF'>=</font> pybind11_getbuffer;
+    heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>as_buffer.bf_releasebuffer <font color='#5555FF'>=</font> pybind11_releasebuffer;
+<b>}</b>
+
+<font color='#009900'>/** Create a brand new Python type according to the `type_record` specification.
+    Return value: New reference. */</font>
+<font color='#0000FF'>inline</font> PyObject<font color='#5555FF'>*</font> <b><a name='make_new_python_type'></a>make_new_python_type</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> type_record <font color='#5555FF'>&amp;</font>rec<font face='Lucida Console'>)</font> <b>{</b>
+    <font color='#0000FF'>auto</font> name <font color='#5555FF'>=</font> reinterpret_steal<font color='#5555FF'>&lt;</font>object<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font color='#BB00BB'>PYBIND11_FROM_STRING</font><font face='Lucida Console'>(</font>rec.name<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>auto</font> qualname <font color='#5555FF'>=</font> name;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>rec.scope <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font color='#5555FF'>!</font><font color='#BB00BB'>PyModule_Check</font><font face='Lucida Console'>(</font>rec.scope.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font color='#BB00BB'>hasattr</font><font face='Lucida Console'>(</font>rec.scope, "<font color='#CC0000'>__qualname__</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+<font color='#0000FF'>#if</font> PY_MAJOR_VERSION <font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font> <font color='#979000'>3</font>
+        qualname <font color='#5555FF'>=</font> reinterpret_steal<font color='#5555FF'>&lt;</font>object<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>
+            <font color='#BB00BB'>PyUnicode_FromFormat</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>%U.%U</font>", rec.scope.<font color='#BB00BB'>attr</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>__qualname__</font>"<font face='Lucida Console'>)</font>.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, name.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#else</font>
+        qualname <font color='#5555FF'>=</font> <font color='#BB00BB'>str</font><font face='Lucida Console'>(</font>rec.scope.<font color='#BB00BB'>attr</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>__qualname__</font>"<font face='Lucida Console'>)</font>.cast<font color='#5555FF'>&lt;</font>std::string<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> "<font color='#CC0000'>.</font>" <font color='#5555FF'>+</font> rec.name<font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#endif</font>
+    <b>}</b>
+
+    object module;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>rec.scope<font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#BB00BB'>hasattr</font><font face='Lucida Console'>(</font>rec.scope, "<font color='#CC0000'>__module__</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            module <font color='#5555FF'>=</font> rec.scope.<font color='#BB00BB'>attr</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>__module__</font>"<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>else</font> <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#BB00BB'>hasattr</font><font face='Lucida Console'>(</font>rec.scope, "<font color='#CC0000'>__name__</font>"<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>
+            module <font color='#5555FF'>=</font> rec.scope.<font color='#BB00BB'>attr</font><font face='Lucida Console'>(</font>"<font color='#CC0000'>__name__</font>"<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>auto</font> full_name <font color='#5555FF'>=</font> <font color='#BB00BB'>c_str</font><font face='Lucida Console'>(</font>
+<font color='#0000FF'>#if</font> <font color='#5555FF'>!</font>defined<font face='Lucida Console'>(</font>PYPY_VERSION<font face='Lucida Console'>)</font>
+        module ? <font color='#BB00BB'>str</font><font face='Lucida Console'>(</font>module<font face='Lucida Console'>)</font>.cast<font color='#5555FF'>&lt;</font>std::string<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> "<font color='#CC0000'>.</font>" <font color='#5555FF'>+</font> rec.name :
+<font color='#0000FF'>#endif</font>
+        rec.name<font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font>tp_doc <font color='#5555FF'>=</font> nullptr;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>rec.doc <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> options::<font color='#BB00BB'>show_user_defined_docstrings</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <b>{</b>
+        <font color='#009900'>/* Allocate memory for docstring (using PyObject_MALLOC, since
+           Python will free this later on) */</font>
+        <font color='#0000FF'><u>size_t</u></font> size <font color='#5555FF'>=</font> <font color='#BB00BB'>strlen</font><font face='Lucida Console'>(</font>rec.doc<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> <font color='#979000'>1</font>;
+        tp_doc <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>char</u></font> <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> <font color='#BB00BB'>PyObject_MALLOC</font><font face='Lucida Console'>(</font>size<font face='Lucida Console'>)</font>;
+        <font color='#BB00BB'>memcpy</font><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font><font color='#0000FF'><u>void</u></font> <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> tp_doc, rec.doc, size<font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+    <font color='#0000FF'>auto</font> <font color='#5555FF'>&amp;</font>internals <font color='#5555FF'>=</font> <font color='#BB00BB'>get_internals</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>auto</font> bases <font color='#5555FF'>=</font> <font color='#BB00BB'>tuple</font><font face='Lucida Console'>(</font>rec.bases<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>auto</font> base <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>bases.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font> ? internals.instance_base
+                                    : bases[<font color='#979000'>0</font>].<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+
+    <font color='#009900'>/* Danger zone: from now (and until PyType_Ready), make sure to
+       issue no Python C API calls which could potentially invoke the
+       garbage collector (the GC will call type_traverse(), which will in
+       turn find the newly constructed type in an invalid state) */</font>
+    <font color='#0000FF'>auto</font> metaclass <font color='#5555FF'>=</font> rec.metaclass.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> ? <font face='Lucida Console'>(</font>PyTypeObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> rec.metaclass.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>
+                                         : internals.default_metaclass;
+
+    <font color='#0000FF'>auto</font> heap_type <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>PyHeapTypeObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> metaclass<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font><font color='#BB00BB'>tp_alloc</font><font face='Lucida Console'>(</font>metaclass, <font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#5555FF'>!</font>heap_type<font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>string</font><font face='Lucida Console'>(</font>rec.name<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> "<font color='#CC0000'>: Unable to create type object!</font>"<font face='Lucida Console'>)</font>;
+
+    heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_name <font color='#5555FF'>=</font> name.<font color='#BB00BB'>release</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#ifdef</font> PYBIND11_BUILTIN_QUALNAME
+    heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_qualname <font color='#5555FF'>=</font> qualname.<font color='#BB00BB'>inc_ref</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+<font color='#0000FF'>#endif</font>
+
+    <font color='#0000FF'>auto</font> type <font color='#5555FF'>=</font> <font color='#5555FF'>&amp;</font>heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>ht_type;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_name <font color='#5555FF'>=</font> full_name;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_doc <font color='#5555FF'>=</font> tp_doc;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_base <font color='#5555FF'>=</font> <font color='#BB00BB'>type_incref</font><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyTypeObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font>base<font face='Lucida Console'>)</font>;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_basicsize <font color='#5555FF'>=</font> <font color='#0000FF'>static_cast</font><font color='#5555FF'>&lt;</font>ssize_t<font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font><font color='#0000FF'>sizeof</font><font face='Lucida Console'>(</font>instance<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>bases.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>&gt;</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+        type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_bases <font color='#5555FF'>=</font> bases.<font color='#BB00BB'>release</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>.<font color='#BB00BB'>ptr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+
+    <font color='#009900'>/* Don't inherit base __init__ */</font>
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_init <font color='#5555FF'>=</font> pybind11_object_init;
+
+    <font color='#009900'>/* Supported protocols */</font>
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_as_number <font color='#5555FF'>=</font> <font color='#5555FF'>&amp;</font>heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>as_number;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_as_sequence <font color='#5555FF'>=</font> <font color='#5555FF'>&amp;</font>heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>as_sequence;
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_as_mapping <font color='#5555FF'>=</font> <font color='#5555FF'>&amp;</font>heap_type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>as_mapping;
+
+    <font color='#009900'>/* Flags */</font>
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_flags <font color='#5555FF'>|</font><font color='#5555FF'>=</font> Py_TPFLAGS_DEFAULT <font color='#5555FF'>|</font> Py_TPFLAGS_BASETYPE <font color='#5555FF'>|</font> Py_TPFLAGS_HEAPTYPE;
+<font color='#0000FF'>#if</font> PY_MAJOR_VERSION <font color='#5555FF'>&lt;</font> <font color='#979000'>3</font>
+    type<font color='#5555FF'>-</font><font color='#5555FF'>&gt;</font>tp_flags <font color='#5555FF'>|</font><font color='#5555FF'>=</font> Py_TPFLAGS_CHECKTYPES;
+<font color='#0000FF'>#endif</font>
+
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>rec.dynamic_attr<font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>enable_dynamic_attributes</font><font face='Lucida Console'>(</font>heap_type<font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>rec.buffer_protocol<font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>enable_buffer_protocol</font><font face='Lucida Console'>(</font>heap_type<font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font><font color='#BB00BB'>PyType_Ready</font><font face='Lucida Console'>(</font>type<font face='Lucida Console'>)</font> <font color='#5555FF'>&lt;</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>pybind11_fail</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>string</font><font face='Lucida Console'>(</font>rec.name<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> "<font color='#CC0000'>: PyType_Ready failed (</font>" <font color='#5555FF'>+</font> <font color='#BB00BB'>error_string</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> "<font color='#CC0000'>)!</font>"<font face='Lucida Console'>)</font>;
+
+    <font color='#BB00BB'>assert</font><font face='Lucida Console'>(</font>rec.dynamic_attr ? <font color='#BB00BB'>PyType_HasFeature</font><font face='Lucida Console'>(</font>type, Py_TPFLAGS_HAVE_GC<font face='Lucida Console'>)</font>
+                            : <font color='#5555FF'>!</font><font color='#BB00BB'>PyType_HasFeature</font><font face='Lucida Console'>(</font>type, Py_TPFLAGS_HAVE_GC<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+    <font color='#009900'>/* Register type with the parent scope */</font>
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>rec.scope<font face='Lucida Console'>)</font>
+        <font color='#BB00BB'>setattr</font><font face='Lucida Console'>(</font>rec.scope, rec.name, <font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> type<font face='Lucida Console'>)</font>;
+    <font color='#0000FF'>else</font>
+        <font color='#BB00BB'>Py_INCREF</font><font face='Lucida Console'>(</font>type<font face='Lucida Console'>)</font>; <font color='#009900'>// Keep it alive forever (reference leak)
+</font>
+    <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>module<font face='Lucida Console'>)</font> <font color='#009900'>// Needed by pydoc
+</font>        <font color='#BB00BB'>setattr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> type, "<font color='#CC0000'>__module__</font>", module<font face='Lucida Console'>)</font>;
+
+    <font color='#BB00BB'>PYBIND11_SET_OLDPY_QUALNAME</font><font face='Lucida Console'>(</font>type, qualname<font face='Lucida Console'>)</font>;
+
+    <font color='#0000FF'>return</font> <font face='Lucida Console'>(</font>PyObject <font color='#5555FF'>*</font><font face='Lucida Console'>)</font> type;
+<b>}</b>
+
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>detail<font face='Lucida Console'>)</font>
+<b><a name='NAMESPACE_END'></a>NAMESPACE_END</b><font face='Lucida Console'>(</font>PYBIND11_NAMESPACE<font face='Lucida Console'>)</font>
+
+</pre></body></html>
