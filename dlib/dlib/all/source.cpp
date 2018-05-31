@@ -23,8 +23,6 @@
 #include "../data_io/mnist.cpp"
 
 
-
-
 #ifndef DLIB_ISO_CPP_ONLY
 // Code that depends on OS specific APIs
 

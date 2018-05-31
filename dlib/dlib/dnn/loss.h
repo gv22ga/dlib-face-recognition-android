@@ -18,7 +18,7 @@ namespace dlib
 
 // ----------------------------------------------------------------------------------------
 
-    class loss_binary_hinge_ 
+    class loss_binary_hinge_
     {
     public:
 
@@ -38,8 +38,8 @@ namespace dlib
             DLIB_CASSERT(sub.sample_expansion_factor() == 1);
 
             const tensor& output_tensor = sub.get_output();
-            DLIB_CASSERT(output_tensor.nr() == 1 && 
-                         output_tensor.nc() == 1 && 
+            DLIB_CASSERT(output_tensor.nr() == 1 &&
+                         output_tensor.nc() == 1 &&
                          output_tensor.k() == 1);
             DLIB_CASSERT(input_tensor.num_samples() == output_tensor.num_samples());
 
@@ -56,7 +56,7 @@ namespace dlib
             >
         double compute_loss_value_and_gradient (
             const tensor& input_tensor,
-            const_label_iterator truth, 
+            const_label_iterator truth,
             SUBNET& sub
         ) const
         {
@@ -68,8 +68,8 @@ namespace dlib
             DLIB_CASSERT(input_tensor.num_samples()%sub.sample_expansion_factor() == 0);
             DLIB_CASSERT(input_tensor.num_samples() == grad.num_samples());
             DLIB_CASSERT(input_tensor.num_samples() == output_tensor.num_samples());
-            DLIB_CASSERT(output_tensor.nr() == 1 && 
-                         output_tensor.nc() == 1 && 
+            DLIB_CASSERT(output_tensor.nr() == 1 &&
+                         output_tensor.nc() == 1 &&
                          output_tensor.k() == 1);
 
             // The loss we output is the average loss over the mini-batch.
@@ -126,7 +126,7 @@ namespace dlib
 
 // ----------------------------------------------------------------------------------------
 
-    class loss_binary_log_ 
+    class loss_binary_log_
     {
     public:
 
@@ -146,8 +146,8 @@ namespace dlib
             DLIB_CASSERT(sub.sample_expansion_factor() == 1);
 
             const tensor& output_tensor = sub.get_output();
-            DLIB_CASSERT(output_tensor.nr() == 1 && 
-                         output_tensor.nc() == 1 && 
+            DLIB_CASSERT(output_tensor.nr() == 1 &&
+                         output_tensor.nc() == 1 &&
                          output_tensor.k() == 1);
             DLIB_CASSERT(input_tensor.num_samples() == output_tensor.num_samples());
 
@@ -165,7 +165,7 @@ namespace dlib
             >
         double compute_loss_value_and_gradient (
             const tensor& input_tensor,
-            const_label_iterator truth, 
+            const_label_iterator truth,
             SUBNET& sub
         ) const
         {
@@ -177,11 +177,11 @@ namespace dlib
             DLIB_CASSERT(input_tensor.num_samples()%sub.sample_expansion_factor() == 0);
             DLIB_CASSERT(input_tensor.num_samples() == grad.num_samples());
             DLIB_CASSERT(input_tensor.num_samples() == output_tensor.num_samples());
-            DLIB_CASSERT(output_tensor.nr() == 1 && 
-                         output_tensor.nc() == 1 && 
+            DLIB_CASSERT(output_tensor.nr() == 1 &&
+                         output_tensor.nc() == 1 &&
                          output_tensor.k() == 1);
-            DLIB_CASSERT(grad.nr() == 1 && 
-                         grad.nc() == 1 && 
+            DLIB_CASSERT(grad.nr() == 1 &&
+                         grad.nc() == 1 &&
                          grad.k() == 1);
 
             tt::sigmoid(grad, output_tensor);
@@ -250,7 +250,7 @@ namespace dlib
 
 // ----------------------------------------------------------------------------------------
 
-    class loss_multiclass_log_ 
+    class loss_multiclass_log_
     {
     public:
 
@@ -269,7 +269,7 @@ namespace dlib
         {
             const tensor& output_tensor = sub.get_output();
             DLIB_CASSERT(sub.sample_expansion_factor() == 1);
-            DLIB_CASSERT(output_tensor.nr() == 1 && 
+            DLIB_CASSERT(output_tensor.nr() == 1 &&
                          output_tensor.nc() == 1 );
             DLIB_CASSERT(input_tensor.num_samples() == output_tensor.num_samples());
 
@@ -290,7 +290,7 @@ namespace dlib
             >
         double compute_loss_value_and_gradient (
             const tensor& input_tensor,
-            const_label_iterator truth, 
+            const_label_iterator truth,
             SUBNET& sub
         ) const
         {
@@ -302,9 +302,9 @@ namespace dlib
             DLIB_CASSERT(input_tensor.num_samples()%sub.sample_expansion_factor() == 0);
             DLIB_CASSERT(input_tensor.num_samples() == grad.num_samples());
             DLIB_CASSERT(input_tensor.num_samples() == output_tensor.num_samples());
-            DLIB_CASSERT(output_tensor.nr() == 1 && 
+            DLIB_CASSERT(output_tensor.nr() == 1 &&
                          output_tensor.nc() == 1);
-            DLIB_CASSERT(grad.nr() == 1 && 
+            DLIB_CASSERT(grad.nr() == 1 &&
                          grad.nc() == 1);
 
             tt::softmax(grad, output_tensor);
@@ -380,7 +380,7 @@ namespace dlib
 
         struct detector_window_details
         {
-            detector_window_details() = default; 
+            detector_window_details() = default;
             detector_window_details(unsigned long w, unsigned long h) : width(w), height(h) {}
             detector_window_details(unsigned long w, unsigned long h, const std::string& l) : width(w), height(h), label(l) {}
 
@@ -460,7 +460,7 @@ namespace dlib
                         }
                     }
 
-                    detector_window_details p((unsigned long)std::round(detector_width), (unsigned long)std::round(detector_height), label);
+                    detector_window_details p((unsigned long)round(detector_width), (unsigned long)round(detector_height), label);
                     detector_windows.push_back(p);
                 }
             }
@@ -700,11 +700,11 @@ namespace dlib
 
 // ----------------------------------------------------------------------------------------
 
-    class loss_mmod_ 
+    class loss_mmod_
     {
         struct intermediate_detection
         {
-            intermediate_detection() = default; 
+            intermediate_detection() = default;
 
             intermediate_detection(
                 rectangle rect_
@@ -781,7 +781,7 @@ namespace dlib
             >
         double compute_loss_value_and_gradient (
             const tensor& input_tensor,
-            const_label_iterator truth, 
+            const_label_iterator truth,
             SUBNET& sub
         ) const
         {
@@ -860,7 +860,7 @@ namespace dlib
                 std::vector<bool> hit_truth_table(truth->size(), false);
 
                 std::vector<intermediate_detection> final_dets;
-                // The point of this loop is to fill out the truth_score_hits array. 
+                // The point of this loop is to fill out the truth_score_hits array.
                 for (unsigned long i = 0; i < dets.size() && final_dets.size() < max_num_dets; ++i)
                 {
                     if (overlaps_any_box_nms(final_dets, dets[i].rect))
@@ -895,7 +895,7 @@ namespace dlib
                 // ignore and print a warning message to the user.
                 for (size_t i = 0; i < hit_truth_table.size(); ++i)
                 {
-                    if (!hit_truth_table[i] && !(*truth)[i].ignore) 
+                    if (!hit_truth_table[i] && !(*truth)[i].ignore)
                     {
                         // So we didn't hit this truth box.  Is that because there is
                         // another, different truth box, that overlaps it according to NMS?
@@ -913,8 +913,8 @@ namespace dlib
                             g[idx] = 0;
                             std::cout << "Warning, ignoring object.  We encountered a truth rectangle located at " << (*truth)[i].rect;
                             std::cout << " that is suppressed by non-max-suppression ";
-                            std::cout << "because it is overlapped by another truth rectangle located at " << best_matching_truth_box 
-                                      << " (IoU:"<< box_intersection_over_union(best_matching_truth_box,(*truth)[i]) <<", Percent covered:" 
+                            std::cout << "because it is overlapped by another truth rectangle located at " << best_matching_truth_box
+                                      << " (IoU:"<< box_intersection_over_union(best_matching_truth_box,(*truth)[i]) <<", Percent covered:"
                                       << box_percent_covered(best_matching_truth_box,(*truth)[i]) << ")." << std::endl;
                         }
                     }
@@ -925,7 +925,7 @@ namespace dlib
 
 
                 // Now figure out which detections jointly maximize the loss and detection score sum.  We
-                // need to take into account the fact that allowing a true detection in the output, while 
+                // need to take into account the fact that allowing a true detection in the output, while
                 // initially reducing the loss, may allow us to increase the loss later with many duplicate
                 // detections.
                 for (unsigned long i = 0; i < dets.size() && final_dets.size() < max_num_dets; ++i)
@@ -1038,7 +1038,7 @@ namespace dlib
             long i,
             std::vector<intermediate_detection>& dets_accum,
             double adjust_threshold,
-            const net_type& net 
+            const net_type& net
         ) const
         {
             DLIB_CASSERT(net.sample_expansion_factor() == 1,net.sample_expansion_factor());
@@ -1092,7 +1092,7 @@ namespace dlib
                     continue;
 
                 rectangle det_window;
-                
+
                 if (options.assume_image_pyramid == use_image_pyramid::yes)
                 {
                     det_window = centered_rect(point(0,0), options.detector_windows[i].width, options.detector_windows[i].height);
@@ -1122,7 +1122,7 @@ namespace dlib
             const net_type& net,
             size_t& det_idx,
             use_image_pyramid assume_image_pyramid
-        ) const 
+        ) const
         {
             using namespace std;
             if (!input_layer(net).image_contained_point(input_tensor,center(rect)))
@@ -1279,7 +1279,7 @@ namespace dlib
 
 // ----------------------------------------------------------------------------------------
 
-    class loss_metric_ 
+    class loss_metric_
     {
     public:
 
@@ -1291,7 +1291,7 @@ namespace dlib
         loss_metric_(
             float margin_,
             float dist_thresh_
-        ) : margin(margin_), dist_thresh(dist_thresh_) 
+        ) : margin(margin_), dist_thresh(dist_thresh_)
         {
             DLIB_CASSERT(margin_ > 0);
             DLIB_CASSERT(dist_thresh_ > 0);
@@ -1312,7 +1312,7 @@ namespace dlib
             DLIB_CASSERT(input_tensor.num_samples() != 0);
             DLIB_CASSERT(input_tensor.num_samples()%sub.sample_expansion_factor() == 0);
             DLIB_CASSERT(input_tensor.num_samples() == output_tensor.num_samples());
-            DLIB_CASSERT(output_tensor.nr() == 1 && 
+            DLIB_CASSERT(output_tensor.nr() == 1 &&
                          output_tensor.nc() == 1);
 
             const float* p = output_tensor.host();
@@ -1335,7 +1335,7 @@ namespace dlib
             >
         double compute_loss_value_and_gradient (
             const tensor& input_tensor,
-            const_label_iterator truth, 
+            const_label_iterator truth,
             SUBNET& sub
         ) const
         {
@@ -1347,9 +1347,9 @@ namespace dlib
             DLIB_CASSERT(input_tensor.num_samples()%sub.sample_expansion_factor() == 0);
             DLIB_CASSERT(input_tensor.num_samples() == grad.num_samples());
             DLIB_CASSERT(input_tensor.num_samples() == output_tensor.num_samples());
-            DLIB_CASSERT(output_tensor.nr() == 1 && 
+            DLIB_CASSERT(output_tensor.nr() == 1 &&
                          output_tensor.nc() == 1);
-            DLIB_CASSERT(grad.nr() == 1 && 
+            DLIB_CASSERT(grad.nr() == 1 &&
                          grad.nc() == 1);
 
 
@@ -1423,7 +1423,7 @@ namespace dlib
                     auto d2 = xx + yy - 2*xy;
                     if (d2 <= 0)
                         d2 = 0;
-                    else 
+                    else
                         d2 = std::sqrt(d2);
 
                     // It should be noted that the derivative of length(x-y) with respect
@@ -1467,7 +1467,7 @@ namespace dlib
             }
 
 
-            tt::gemm(0, grad, 1, grad_mul, false, output_tensor, false); 
+            tt::gemm(0, grad, 1, grad_mul, false, output_tensor, false);
 
             return loss;
         }
@@ -1785,7 +1785,7 @@ namespace dlib
         typedef float output_label_type;
 
         loss_epsilon_insensitive_() = default;
-        loss_epsilon_insensitive_(double eps) : eps(eps) 
+        loss_epsilon_insensitive_(double eps) : eps(eps)
         {
             DLIB_CASSERT(eps >= 0, "You can't set a negative error epsilon.");
         }
@@ -2062,14 +2062,14 @@ namespace dlib
             const float* const out_data = output_tensor.host();
 
             // The index of the largest output for each element is the label.
-            const auto find_label = [&](long sample, long r, long c) 
+            const auto find_label = [&](long sample, long r, long c)
             {
                 uint16_t label = 0;
                 float max_value = out_data[tensor_index(output_tensor, sample, 0, r, c)];
-                for (long k = 1; k < output_tensor.k(); ++k) 
+                for (long k = 1; k < output_tensor.k(); ++k)
                 {
                     const float value = out_data[tensor_index(output_tensor, sample, k, r, c)];
-                    if (value > max_value) 
+                    if (value > max_value)
                     {
                         label = static_cast<uint16_t>(k);
                         max_value = value;
@@ -2078,12 +2078,12 @@ namespace dlib
                 return label;
             };
 
-            for (long i = 0; i < output_tensor.num_samples(); ++i, ++iter) 
+            for (long i = 0; i < output_tensor.num_samples(); ++i, ++iter)
             {
                 iter->set_size(output_tensor.nr(), output_tensor.nc());
-                for (long r = 0; r < output_tensor.nr(); ++r) 
+                for (long r = 0; r < output_tensor.nr(); ++r)
                 {
-                    for (long c = 0; c < output_tensor.nc(); ++c) 
+                    for (long c = 0; c < output_tensor.nc(); ++c)
                     {
                         // The index of the largest output for this element is the label.
                         iter->operator()(r, c) = find_label(i, r, c);
@@ -2475,7 +2475,7 @@ namespace dlib
 
 // ----------------------------------------------------------------------------------------
 
-    class loss_dot_ 
+    class loss_dot_
     {
     public:
 
@@ -2509,7 +2509,7 @@ namespace dlib
             >
         double compute_loss_value_and_gradient (
             const tensor& input_tensor,
-            const_label_iterator truth, 
+            const_label_iterator truth,
             SUBNET& sub
         ) const
         {
@@ -2525,7 +2525,7 @@ namespace dlib
             const long network_output_dims = output_tensor.size()/output_tensor.num_samples();
 
 
-            // The loss we output is the average loss over the mini-batch. 
+            // The loss we output is the average loss over the mini-batch.
             const double scale = 1.0/output_tensor.num_samples();
             double loss = 0;
             float* g = grad.host();
@@ -2534,7 +2534,7 @@ namespace dlib
             {
                 DLIB_CASSERT(truth->size() == network_output_dims, "The network must output a vector with the same dimensionality as the training labels. "
                     << "\ntruth->size():       " << truth->size()
-                    << "\nnetwork_output_dims: " << network_output_dims); 
+                    << "\nnetwork_output_dims: " << network_output_dims);
 
                 const float* t = &(*truth++)(0);
 

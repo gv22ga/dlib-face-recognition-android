@@ -24,7 +24,7 @@ To build native code and copy to android studio's project manually
 Please see [dlib-android](https://github.com/tzutalin/dlib-android) for more details
 
 ## Dlib 19.9
-This project uses dlib 19.9. Due to some c++11 issues, I had problem compiling dlib 19.9 with opencv. So I made some small changes in `dlib/dlib/serialize.h` and `dlib/dlib/dnn/layers.h`  files in dlib library.
+This project uses dlib 19.9. Due to some c++11 issues, I had problem compiling dlib 19.9 with opencv. So I made some small changes in `dlib/dlib/serialize.h`, `dlib/dlib/dnn/layers.h`, `dlib/dlib/geometry/rectangle.h`, `dlib/dlib/image_transforms/interpolation.h`, `dlib/dlib/dnn/loss.h`, `dlib/dlib/statistics/running_gradient.h` and `dlib/dlib/global_optimization/global_function_search.cpp` files in dlib library.
 
 ## Sample code
 ```java

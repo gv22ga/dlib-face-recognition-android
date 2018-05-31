@@ -13,7 +13,7 @@
 
 namespace dlib
 {
-    class running_gradient 
+    class running_gradient
     {
     public:
 
@@ -85,7 +85,7 @@ namespace dlib
 
             return w(1);
         }
-        double standard_error ( 
+        double standard_error (
         ) const
         {
             // make sure requires clause is not broken
@@ -153,7 +153,7 @@ namespace dlib
 
     private:
 
-        static double normal_cdf(double value, double mean, double stddev) 
+        static double normal_cdf(double value, double mean, double stddev)
         {
             if (stddev == 0)
             {
@@ -165,7 +165,7 @@ namespace dlib
                     return 0.5;
             }
             value = (value-mean)/stddev;
-            return 0.5 * std::erfc(-value / std::sqrt(2.0));
+            return 0.5 * erfc(-value / std::sqrt(2.0));
         }
 
         double n;
@@ -220,7 +220,7 @@ namespace dlib
 
     template <
         typename T
-        > 
+        >
     double find_upper_quantile (
         const T& container_,
         double quantile
@@ -233,7 +233,7 @@ namespace dlib
 
         DLIB_CASSERT(container.size() > 0);
 
-        size_t idx_upper = std::round((container.size()-1)*(1-quantile));
+        size_t idx_upper = round((container.size()-1)*(1-quantile));
 
         std::nth_element(container.begin(), container.begin()+idx_upper, container.end());
         auto upper_q = *(container.begin()+idx_upper);
@@ -244,7 +244,7 @@ namespace dlib
 
     template <
         typename T
-        > 
+        >
     size_t count_steps_without_decrease (
         const T& container,
         double probability_of_decrease = 0.51
@@ -253,7 +253,7 @@ namespace dlib
         // make sure requires clause is not broken
         DLIB_ASSERT(0.5 < probability_of_decrease && probability_of_decrease < 1,
             "\t size_t count_steps_without_decrease()"
-            << "\n\t probability_of_decrease: "<< probability_of_decrease 
+            << "\n\t probability_of_decrease: "<< probability_of_decrease
         );
 
         running_gradient g;
@@ -281,7 +281,7 @@ namespace dlib
 
     template <
         typename T
-        > 
+        >
     size_t count_steps_without_decrease_robust (
         const T& container,
         double probability_of_decrease = 0.51,
@@ -292,13 +292,13 @@ namespace dlib
         DLIB_ASSERT(0 <= quantile_discard && quantile_discard <= 1);
         DLIB_ASSERT(0.5 < probability_of_decrease && probability_of_decrease < 1,
             "\t size_t count_steps_without_decrease_robust()"
-            << "\n\t probability_of_decrease: "<< probability_of_decrease 
+            << "\n\t probability_of_decrease: "<< probability_of_decrease
         );
 
         if (container.size() == 0)
             return 0;
 
-        const auto quantile_thresh = find_upper_quantile(container, quantile_discard); 
+        const auto quantile_thresh = find_upper_quantile(container, quantile_discard);
 
         running_gradient g;
         size_t count = 0;
@@ -328,7 +328,7 @@ namespace dlib
 
     template <
         typename T
-        > 
+        >
     size_t count_steps_without_increase (
         const T& container,
         double probability_of_increase = 0.51
@@ -337,7 +337,7 @@ namespace dlib
         // make sure requires clause is not broken
         DLIB_ASSERT(0.5 < probability_of_increase && probability_of_increase < 1,
             "\t size_t count_steps_without_increase()"
-            << "\n\t probability_of_increase: "<< probability_of_increase 
+            << "\n\t probability_of_increase: "<< probability_of_increase
         );
 
         running_gradient g;

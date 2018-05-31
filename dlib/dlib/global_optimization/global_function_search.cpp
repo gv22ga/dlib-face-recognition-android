@@ -75,12 +75,12 @@ namespace dlib
             requires
                 - X.size() > 0
                 - X.nc() == Y.size()
-                - X.nr()+1 <= X.nc()      
+                - X.nr()+1 <= X.nc()
             ensures
                 - This function finds a quadratic function, Q(x), that interpolates the
                   given set of points.  If there aren't enough points to uniquely define
                   Q(x) then the Q(x) that fits the given points with the minimum Frobenius
-                  norm hessian matrix is selected. 
+                  norm hessian matrix is selected.
                 - To be precise:
                     - Let: Q(x) == 0.5*trans(x)*H*x + trans(x)*g + c
                     - Then this function finds H, g, and c that minimizes the following:
@@ -225,7 +225,7 @@ namespace dlib
 
             // Use enough points to fill out a quadratic model or the max available if we don't
             // have quite enough.
-            const long N = std::min((long)samples.size(), (dims+1)*(dims+2)/2); 
+            const long N = std::min((long)samples.size(), (dims+1)*(dims+2)/2);
 
 
             // first find the best sample;
@@ -302,14 +302,14 @@ namespace dlib
             {
                 temp(i) = rnd.get_double_in_range(lower(i), upper(i));
                 if (is_integer_variable[i])
-                    temp(i) = std::round(temp(i));
+                    temp(i) = round(temp(i));
             }
             return temp;
         }
 
     // ----------------------------------------------------------------------------------------
 
-        struct max_upper_bound_function 
+        struct max_upper_bound_function
         {
             max_upper_bound_function() = default;
 
@@ -317,7 +317,7 @@ namespace dlib
             max_upper_bound_function(
                 const matrix_exp<EXP>& x,
                 double predicted_improvement,
-                double upper_bound 
+                double upper_bound
             ) : x(x), predicted_improvement(predicted_improvement), upper_bound(upper_bound)  {}
 
             matrix<double,0,1> x;
@@ -333,7 +333,7 @@ namespace dlib
             const matrix<double,0,1>& lower,
             const matrix<double,0,1>& upper,
             const std::vector<bool>& is_integer_variable,
-            const size_t num_random_samples 
+            const size_t num_random_samples
         )
         {
             DLIB_CASSERT(ub.num_points() > 0);
@@ -370,9 +370,9 @@ namespace dlib
 // ----------------------------------------------------------------------------------------
 
     function_spec::function_spec(
-        matrix<double,0,1> bound1, 
+        matrix<double,0,1> bound1,
         matrix<double,0,1> bound2
-    ) : 
+    ) :
         lower(std::move(bound1)), upper(std::move(bound2))
     {
         DLIB_CASSERT(lower.size() == upper.size());
@@ -389,23 +389,23 @@ namespace dlib
 
     function_spec::function_spec(
         matrix<double,0,1> bound1,
-        matrix<double,0,1> bound2, 
+        matrix<double,0,1> bound2,
         std::vector<bool> is_integer
-    ) : 
+    ) :
         function_spec(std::move(bound1),std::move(bound2))
     {
         is_integer_variable = std::move(is_integer);
         DLIB_CASSERT(lower.size() == (long)is_integer_variable.size());
 
 
-        // Make sure any integer variables have integer bounds. 
+        // Make sure any integer variables have integer bounds.
         for (size_t i = 0; i < is_integer_variable.size(); ++i)
         {
             if (is_integer_variable[i])
             {
-                DLIB_CASSERT(std::round(lower(i)) == lower(i), "If you say a variable is an integer variable then it must have an integer lower bound. \n"
+                DLIB_CASSERT(round(lower(i)) == lower(i), "If you say a variable is an integer variable then it must have an integer lower bound. \n"
                     << "lower[i] = " << lower(i));
-                DLIB_CASSERT(std::round(upper(i)) == upper(i), "If you say a variable is an integer variable then it must have an integer upper bound. \n"
+                DLIB_CASSERT(round(upper(i)) == upper(i), "If you say a variable is an integer variable then it must have an integer upper bound. \n"
                     << "upper[i] = " << upper(i));
             }
         }
@@ -413,7 +413,7 @@ namespace dlib
 
 // ----------------------------------------------------------------------------------------
 
-    namespace gopt_impl 
+    namespace gopt_impl
     {
         upper_bound_function funct_info::build_upper_bound_with_all_function_evals (
         ) const
@@ -455,7 +455,7 @@ namespace dlib
             return best_y;
         }
 
-    } // end namespace gopt_impl 
+    } // end namespace gopt_impl
 
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
@@ -474,7 +474,7 @@ namespace dlib
     }
 
 // ----------------------------------------------------------------------------------------
-    
+
     function_evaluation_request& function_evaluation_request::
     operator=(
         function_evaluation_request&& item
@@ -616,8 +616,8 @@ namespace dlib
         const std::vector<function_spec>& functions_,
         const std::vector<std::vector<function_evaluation>>& initial_function_evals,
         const double relative_noise_magnitude_
-    ) : 
-        global_function_search(functions_) 
+    ) :
+        global_function_search(functions_)
     {
         DLIB_CASSERT(functions_.size() > 0);
         DLIB_CASSERT(functions_.size() == initial_function_evals.size());
@@ -633,8 +633,8 @@ namespace dlib
 
     size_t global_function_search::
     num_functions(
-    ) const 
-    { 
+    ) const
+    {
         return functions.size();
     }
 
@@ -689,7 +689,7 @@ namespace dlib
 
     function_evaluation_request global_function_search::
     get_next_x (
-    ) 
+    )
     {
         DLIB_CASSERT(num_functions() != 0);
 
@@ -714,7 +714,7 @@ namespace dlib
                 for (long i = 0; i < new_req.x.size(); ++i)
                 {
                     if (info->spec.is_integer_variable[i])
-                        new_req.x(i) = std::round(new_req.x(i));
+                        new_req.x(i) = round(new_req.x(i));
                 }
                 info->outstanding_evals.emplace_back(new_req);
                 return function_evaluation_request(new_req,info);
@@ -773,7 +773,7 @@ namespace dlib
                 auto tmp = pick_next_sample_as_max_upper_bound(rnd,
                     info->build_upper_bound_with_all_function_evals(), info->spec.lower, info->spec.upper,
                     info->spec.is_integer_variable,  num_random_samples);
-                if (tmp.predicted_improvement > 0 && tmp.upper_bound > best_upper_bound) 
+                if (tmp.predicted_improvement > 0 && tmp.upper_bound > best_upper_bound)
                 {
                     best_upper_bound = tmp.upper_bound;
                     next_sample = std::move(tmp.x);
@@ -781,7 +781,7 @@ namespace dlib
                 }
             }
 
-            // if we found a good function to evaluate then return that. 
+            // if we found a good function to evaluate then return that.
             if (best_funct)
             {
                 outstanding_function_eval_request new_req;
@@ -808,9 +808,9 @@ namespace dlib
 
     double global_function_search::
     get_pure_random_search_probability (
-    ) const 
-    { 
-        return pure_random_search_probability; 
+    ) const
+    {
+        return pure_random_search_probability;
     }
 
 // ----------------------------------------------------------------------------------------
@@ -818,7 +818,7 @@ namespace dlib
     void global_function_search::
     set_pure_random_search_probability (
         double prob
-    ) 
+    )
     {
         DLIB_CASSERT(0 <= prob && prob <= 1);
         pure_random_search_probability = prob;
@@ -828,9 +828,9 @@ namespace dlib
 
     double global_function_search::
     get_solver_epsilon (
-    ) const 
-    { 
-        return min_trust_region_epsilon; 
+    ) const
+    {
+        return min_trust_region_epsilon;
     }
 
 // ----------------------------------------------------------------------------------------
@@ -848,9 +848,9 @@ namespace dlib
 
     double global_function_search::
     get_relative_noise_magnitude (
-    ) const 
-    { 
-        return relative_noise_magnitude; 
+    ) const
+    {
+        return relative_noise_magnitude;
     }
 
 // ----------------------------------------------------------------------------------------
@@ -875,9 +875,9 @@ namespace dlib
 
     size_t global_function_search::
     get_monte_carlo_upper_bound_sample_num (
-    ) const 
-    { 
-        return num_random_samples; 
+    ) const
+    {
+        return num_random_samples;
     }
 
 // ----------------------------------------------------------------------------------------
@@ -908,7 +908,7 @@ namespace dlib
         size_t& idx
     ) const
     {
-        auto compare = [](const std::shared_ptr<gopt_impl::funct_info>& a, const std::shared_ptr<gopt_impl::funct_info>& b) 
+        auto compare = [](const std::shared_ptr<gopt_impl::funct_info>& a, const std::shared_ptr<gopt_impl::funct_info>& b)
             { return a->best_objective_value < b->best_objective_value; };
 
         auto i = std::max_element(functions.begin(), functions.end(), compare);
@@ -921,7 +921,7 @@ namespace dlib
 
     bool global_function_search::
     has_outstanding_trust_region_request (
-    ) const 
+    ) const
     {
         for (auto& f : functions)
         {

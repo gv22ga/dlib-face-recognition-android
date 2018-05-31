@@ -1,7 +1,7 @@
 // Copyright (C) 2012  Davis E. King (davis@dlib.net)
 // License: Boost Software License   See LICENSE.txt for the full license.
 #ifndef DLIB_INTERPOlATIONh_
-#define DLIB_INTERPOlATIONh_ 
+#define DLIB_INTERPOlATIONh_
 
 #include "interpolation_abstract.h"
 #include "../pixel.h"
@@ -26,7 +26,7 @@ namespace dlib
         sub_image_proxy (
             T& img,
             rectangle rect
-        ) 
+        )
         {
             rect = rect.intersect(get_rect(img));
             typedef typename image_traits<T>::pixel_type pixel_type;
@@ -51,7 +51,7 @@ namespace dlib
         const_sub_image_proxy (
             const T& img,
             rectangle rect
-        ) 
+        )
         {
             rect = rect.intersect(get_rect(img));
             typedef typename image_traits<T>::pixel_type pixel_type;
@@ -100,20 +100,20 @@ namespace dlib
     inline long num_columns( const const_sub_image_proxy<T>& img) { return img._nc; }
 
     template <typename T>
-    inline void* image_data( sub_image_proxy<T>& img) 
-    { 
-        return img._data; 
-    } 
-    template <typename T>
-    inline const void* image_data( const sub_image_proxy<T>& img) 
+    inline void* image_data( sub_image_proxy<T>& img)
     {
-        return img._data; 
+        return img._data;
+    }
+    template <typename T>
+    inline const void* image_data( const sub_image_proxy<T>& img)
+    {
+        return img._data;
     }
 
     template <typename T>
-    inline const void* image_data( const const_sub_image_proxy<T>& img) 
+    inline const void* image_data( const const_sub_image_proxy<T>& img)
     {
-        return img._data; 
+        return img._data;
     }
 
     template <typename T>
@@ -225,7 +225,7 @@ namespace dlib
     class interpolate_bilinear
     {
         template <typename T>
-        struct is_rgb_image 
+        struct is_rgb_image
         {
             const static bool value = pixel_traits<typename T::pixel_type>::rgb;
         };
@@ -247,7 +247,7 @@ namespace dlib
             const long bottom = top+1;
 
 
-            // if the interpolation goes outside img 
+            // if the interpolation goes outside img
             if (!(left >= 0 && top >= 0 && right < img.nc() && bottom < img.nr()))
                 return false;
 
@@ -260,10 +260,10 @@ namespace dlib
             assign_pixel(tr, img[top][right]);
             assign_pixel(bl, img[bottom][left]);
             assign_pixel(br, img[bottom][right]);
-            
-            double temp = (1-tb_frac)*((1-lr_frac)*tl + lr_frac*tr) + 
+
+            double temp = (1-tb_frac)*((1-lr_frac)*tl + lr_frac*tr) +
                               tb_frac*((1-lr_frac)*bl + lr_frac*br);
-                            
+
             assign_pixel(result, temp);
             return true;
         }
@@ -283,7 +283,7 @@ namespace dlib
             const long bottom = top+1;
 
 
-            // if the interpolation goes outside img 
+            // if the interpolation goes outside img
             if (!(left >= 0 && top >= 0 && right < img.nc() && bottom < img.nr()))
                 return false;
 
@@ -296,23 +296,23 @@ namespace dlib
             tr = img[top][right].red;
             bl = img[bottom][left].red;
             br = img[bottom][right].red;
-            const double red = (1-tb_frac)*((1-lr_frac)*tl + lr_frac*tr) + 
+            const double red = (1-tb_frac)*((1-lr_frac)*tl + lr_frac*tr) +
                                    tb_frac*((1-lr_frac)*bl + lr_frac*br);
 
             tl = img[top][left].green;
             tr = img[top][right].green;
             bl = img[bottom][left].green;
             br = img[bottom][right].green;
-            const double green = (1-tb_frac)*((1-lr_frac)*tl + lr_frac*tr) + 
+            const double green = (1-tb_frac)*((1-lr_frac)*tl + lr_frac*tr) +
                                    tb_frac*((1-lr_frac)*bl + lr_frac*br);
 
             tl = img[top][left].blue;
             tr = img[top][right].blue;
             bl = img[bottom][left].blue;
             br = img[bottom][right].blue;
-            const double blue = (1-tb_frac)*((1-lr_frac)*tl + lr_frac*tr) + 
+            const double blue = (1-tb_frac)*((1-lr_frac)*tl + lr_frac*tr) +
                                    tb_frac*((1-lr_frac)*bl + lr_frac*br);
-                            
+
             rgb_pixel temp;
             assign_pixel(temp.red, red);
             assign_pixel(temp.green, green);
@@ -327,7 +327,7 @@ namespace dlib
     class interpolate_quadratic
     {
         template <typename T>
-        struct is_rgb_image 
+        struct is_rgb_image
         {
             const static bool value = pixel_traits<typename T::pixel_type>::rgb;
         };
@@ -345,14 +345,14 @@ namespace dlib
 
             const point pp(p);
 
-            // if the interpolation goes outside img 
-            if (!get_rect(img).contains(grow_rect(pp,1))) 
+            // if the interpolation goes outside img
+            if (!get_rect(img).contains(grow_rect(pp,1)))
                 return false;
 
             const long r = pp.y();
             const long c = pp.x();
 
-            const double temp = interpolate(p-pp, 
+            const double temp = interpolate(p-pp,
                                     img[r-1][c-1],
                                     img[r-1][c  ],
                                     img[r-1][c+1],
@@ -378,14 +378,14 @@ namespace dlib
 
             const point pp(p);
 
-            // if the interpolation goes outside img 
-            if (!get_rect(img).contains(grow_rect(pp,1))) 
+            // if the interpolation goes outside img
+            if (!get_rect(img).contains(grow_rect(pp,1)))
                 return false;
 
             const long r = pp.y();
             const long c = pp.x();
 
-            const double red = interpolate(p-pp, 
+            const double red = interpolate(p-pp,
                             img[r-1][c-1].red,
                             img[r-1][c  ].red,
                             img[r-1][c+1].red,
@@ -395,7 +395,7 @@ namespace dlib
                             img[r+1][c-1].red,
                             img[r+1][c  ].red,
                             img[r+1][c+1].red);
-            const double green = interpolate(p-pp, 
+            const double green = interpolate(p-pp,
                             img[r-1][c-1].green,
                             img[r-1][c  ].green,
                             img[r-1][c+1].green,
@@ -405,7 +405,7 @@ namespace dlib
                             img[r+1][c-1].green,
                             img[r+1][c  ].green,
                             img[r+1][c+1].green);
-            const double blue = interpolate(p-pp, 
+            const double blue = interpolate(p-pp,
                             img[r-1][c-1].blue,
                             img[r-1][c  ].blue,
                             img[r-1][c+1].blue,
@@ -432,13 +432,13 @@ namespace dlib
             ml mm mr
             bl bm br
         */
-        // The above is the pixel layout in our little 3x3 neighborhood.  interpolate() will 
-        // fit a quadratic to these 9 pixels and then use that quadratic to find the interpolated 
+        // The above is the pixel layout in our little 3x3 neighborhood.  interpolate() will
+        // fit a quadratic to these 9 pixels and then use that quadratic to find the interpolated
         // value at point p.
         inline double interpolate(
             const dlib::vector<double,2>& p,
-            double tl, double tm, double tr, 
-            double ml, double mm, double mr, 
+            double tl, double tm, double tr,
+            double ml, double mm, double mr,
             double bl, double bm, double br
         ) const
         {
@@ -461,7 +461,7 @@ namespace dlib
 
             matrix<double,6,1> z;
             z = x, y, x*x, x*y, y*y, 1.0;
-                            
+
             return dot(w,z);
         }
     };
@@ -651,7 +651,7 @@ namespace dlib
 
     namespace impl
     {
-        class helper_resize_image 
+        class helper_resize_image
         {
         public:
             helper_resize_image(
@@ -695,7 +695,7 @@ namespace dlib
 
         const double x_scale = (num_columns(in_img)-1)/(double)std::max<long>((num_columns(out_img)-1),1);
         const double y_scale = (num_rows(in_img)-1)/(double)std::max<long>((num_rows(out_img)-1),1);
-        transform_image(in_img, out_img, interp, 
+        transform_image(in_img, out_img, interp,
                         dlib::impl::helper_resize_image(x_scale,y_scale));
     }
 
@@ -712,8 +712,8 @@ namespace dlib
         typename image_type1,
         typename image_type2
         >
-    typename disable_if_c<(is_rgb_image<image_type1>::value&&is_rgb_image<image_type2>::value) || 
-                          (is_grayscale_image<image_type1>::value&&is_grayscale_image<image_type2>::value)>::type 
+    typename disable_if_c<(is_rgb_image<image_type1>::value&&is_rgb_image<image_type2>::value) ||
+                          (is_grayscale_image<image_type1>::value&&is_grayscale_image<image_type2>::value)>::type
     resize_image (
         const image_type1& in_img_,
         image_type2& out_img_,
@@ -762,7 +762,7 @@ namespace dlib
                     assign_pixel(bl, in_img[bottom][left]);
                     assign_pixel(br, in_img[bottom][right]);
 
-                    double temp = (1-tb_frac)*((1-lr_frac)*tl + lr_frac*tr) + 
+                    double temp = (1-tb_frac)*((1-lr_frac)*tl + lr_frac*tr) +
                         tb_frac*((1-lr_frac)*bl + lr_frac*br);
 
                     assign_pixel(out_img[r][c], temp);
@@ -784,8 +784,8 @@ namespace dlib
 
                     T temp;
                     assign_pixel(temp, 0);
-                    vector_to_pixel(temp, 
-                        (1-tb_frac)*((1-lr_frac)*pixel_to_vector<double>(tl) + lr_frac*pixel_to_vector<double>(tr)) + 
+                    vector_to_pixel(temp,
+                        (1-tb_frac)*((1-lr_frac)*pixel_to_vector<double>(tl) + lr_frac*pixel_to_vector<double>(tr)) +
                             tb_frac*((1-lr_frac)*pixel_to_vector<double>(bl) + lr_frac*pixel_to_vector<double>(br)));
                     assign_pixel(out_img[r][c], temp);
                 }
@@ -810,7 +810,7 @@ namespace dlib
         typename image_type,
         typename image_type2
         >
-    typename enable_if_c<is_grayscale_image<image_type>::value && is_grayscale_image<image_type2>::value && images_have_same_pixel_types<image_type,image_type2>::value>::type 
+    typename enable_if_c<is_grayscale_image<image_type>::value && is_grayscale_image<image_type2>::value && images_have_same_pixel_types<image_type,image_type2>::value>::type
     resize_image (
         const image_type& in_img_,
         image_type2& out_img_,
@@ -853,7 +853,7 @@ namespace dlib
                 simd4i left = simd4i(_x);
 
                 simd4f _lr_frac = _x-left;
-                simd4f _inv_lr_frac = 1-_lr_frac; 
+                simd4f _inv_lr_frac = 1-_lr_frac;
                 simd4i right = left+1;
 
                 simd4f tlf = _inv_tb_frac*_inv_lr_frac;
@@ -897,7 +897,7 @@ namespace dlib
                 assign_pixel(bl, in_img[bottom][left]);
                 assign_pixel(br, in_img[bottom][right]);
 
-                float temp = (1-tb_frac)*((1-lr_frac)*tl + lr_frac*tr) + 
+                float temp = (1-tb_frac)*((1-lr_frac)*tl + lr_frac*tr) +
                     tb_frac*((1-lr_frac)*bl + lr_frac*br);
 
                 assign_pixel(out_img[r][c], temp);
@@ -952,7 +952,7 @@ namespace dlib
                 _x += _x_scale;
                 simd4i left = simd4i(_x);
                 simd4f lr_frac = _x-left;
-                simd4f _inv_lr_frac = 1-lr_frac; 
+                simd4f _inv_lr_frac = 1-lr_frac;
                 simd4i right = left+1;
 
                 simd4f tlf = _inv_tb_frac*_inv_lr_frac;
@@ -1020,8 +1020,8 @@ namespace dlib
 
                 T temp;
                 assign_pixel(temp, 0);
-                vector_to_pixel(temp, 
-                    (1-tb_frac)*((1-lr_frac)*pixel_to_vector<double>(tl) + lr_frac*pixel_to_vector<double>(tr)) + 
+                vector_to_pixel(temp,
+                    (1-tb_frac)*((1-lr_frac)*pixel_to_vector<double>(tl) + lr_frac*pixel_to_vector<double>(tr)) +
                     tb_frac*((1-lr_frac)*pixel_to_vector<double>(bl) + lr_frac*pixel_to_vector<double>(br)));
                 assign_pixel(out_img[r][c], temp);
             }
@@ -1056,7 +1056,7 @@ namespace dlib
         >
     void resize_image (
         double size_scale,
-        image_type& img 
+        image_type& img
     )
     {
         // make sure requires clause is not broken
@@ -1067,7 +1067,7 @@ namespace dlib
             );
 
         image_type temp;
-        set_image_size(temp, std::round(size_scale*num_rows(img)), std::round(size_scale*num_columns(img)));
+        set_image_size(temp, round(size_scale*num_rows(img)), round(size_scale*num_columns(img)));
         resize_image(img, temp);
         swap(img, temp);
     }
@@ -1142,7 +1142,7 @@ namespace dlib
     {
         inline rectangle flip_rect_left_right (
             const rectangle& rect,
-            const rectangle& window 
+            const rectangle& window
         )
         {
             rectangle temp;
@@ -1151,8 +1151,8 @@ namespace dlib
 
             const long left_dist = rect.left()-window.left();
 
-            temp.right() = window.right()-left_dist; 
-            temp.left()  = temp.right()-rect.width()+1; 
+            temp.right() = window.right()-left_dist;
+            temp.left()  = temp.right()-rect.width()+1;
             return temp;
         }
 
@@ -1178,7 +1178,7 @@ namespace dlib
             const full_object_detection& obj
         )
         {
-            std::vector<point> parts; 
+            std::vector<point> parts;
             parts.reserve(obj.num_parts());
             for (unsigned long i = 0; i < obj.num_parts(); ++i)
             {
@@ -1203,8 +1203,8 @@ namespace dlib
         DLIB_ASSERT( images.size() == objects.size(),
             "\t void add_image_left_right_flips()"
             << "\n\t Invalid inputs were given to this function."
-            << "\n\t images.size():  " << images.size() 
-            << "\n\t objects.size(): " << objects.size() 
+            << "\n\t images.size():  " << images.size()
+            << "\n\t objects.size(): " << objects.size()
             );
 
         typename image_array_type::value_type temp;
@@ -1242,9 +1242,9 @@ namespace dlib
                      images.size() == objects2.size(),
             "\t void add_image_left_right_flips()"
             << "\n\t Invalid inputs were given to this function."
-            << "\n\t images.size():   " << images.size() 
-            << "\n\t objects.size():  " << objects.size() 
-            << "\n\t objects2.size(): " << objects2.size() 
+            << "\n\t images.size():   " << images.size()
+            << "\n\t objects.size():  " << objects.size()
+            << "\n\t objects2.size(): " << objects2.size()
             );
 
         typename image_array_type::value_type temp;
@@ -1273,7 +1273,7 @@ namespace dlib
 
     template <typename image_array_type>
     void flip_image_dataset_left_right (
-        image_array_type& images, 
+        image_array_type& images,
         std::vector<std::vector<rectangle> >& objects
     )
     {
@@ -1281,14 +1281,14 @@ namespace dlib
         DLIB_ASSERT( images.size() == objects.size(),
             "\t void flip_image_dataset_left_right()"
             << "\n\t Invalid inputs were given to this function."
-            << "\n\t images.size():   " << images.size() 
-            << "\n\t objects.size():  " << objects.size() 
+            << "\n\t images.size():   " << images.size()
+            << "\n\t objects.size():  " << objects.size()
             );
 
         typename image_array_type::value_type temp;
         for (unsigned long i = 0; i < images.size(); ++i)
         {
-            flip_image_left_right(images[i], temp); 
+            flip_image_left_right(images[i], temp);
             swap(temp,images[i]);
             for (unsigned long j = 0; j < objects[i].size(); ++j)
             {
@@ -1301,7 +1301,7 @@ namespace dlib
 
     template <typename image_array_type>
     void flip_image_dataset_left_right (
-        image_array_type& images, 
+        image_array_type& images,
         std::vector<std::vector<rectangle> >& objects,
         std::vector<std::vector<rectangle> >& objects2
     )
@@ -1311,15 +1311,15 @@ namespace dlib
                      images.size() == objects2.size(),
             "\t void flip_image_dataset_left_right()"
             << "\n\t Invalid inputs were given to this function."
-            << "\n\t images.size():   " << images.size() 
-            << "\n\t objects.size():  " << objects.size() 
-            << "\n\t objects2.size(): " << objects2.size() 
+            << "\n\t images.size():   " << images.size()
+            << "\n\t objects.size():  " << objects.size()
+            << "\n\t objects2.size(): " << objects2.size()
             );
 
         typename image_array_type::value_type temp;
         for (unsigned long i = 0; i < images.size(); ++i)
         {
-            flip_image_left_right(images[i], temp); 
+            flip_image_left_right(images[i], temp);
             swap(temp, images[i]);
             for (unsigned long j = 0; j < objects[i].size(); ++j)
             {
@@ -1348,8 +1348,8 @@ namespace dlib
         DLIB_ASSERT( images.size() == objects.size(),
             "\t void upsample_image_dataset()"
             << "\n\t Invalid inputs were given to this function."
-            << "\n\t images.size():   " << images.size() 
-            << "\n\t objects.size():  " << objects.size() 
+            << "\n\t images.size():   " << images.size()
+            << "\n\t objects.size():  " << objects.size()
             );
 
         typename image_array_type::value_type temp;
@@ -1383,8 +1383,8 @@ namespace dlib
         DLIB_ASSERT( images.size() == objects.size(),
             "\t void upsample_image_dataset()"
             << "\n\t Invalid inputs were given to this function."
-            << "\n\t images.size():   " << images.size() 
-            << "\n\t objects.size():  " << objects.size() 
+            << "\n\t images.size():   " << images.size()
+            << "\n\t objects.size():  " << objects.size()
             );
 
         typename image_array_type::value_type temp;
@@ -1420,9 +1420,9 @@ namespace dlib
                      images.size() == objects2.size(),
             "\t void upsample_image_dataset()"
             << "\n\t Invalid inputs were given to this function."
-            << "\n\t images.size():   " << images.size() 
-            << "\n\t objects.size():  " << objects.size() 
-            << "\n\t objects2.size(): " << objects2.size() 
+            << "\n\t images.size():   " << images.size()
+            << "\n\t objects.size():  " << objects.size()
+            << "\n\t objects2.size(): " << objects2.size()
             );
 
         typename image_array_type::value_type temp;
@@ -1459,8 +1459,8 @@ namespace dlib
         DLIB_ASSERT( images.size() == objects.size(),
             "\t void rotate_image_dataset()"
             << "\n\t Invalid inputs were given to this function."
-            << "\n\t images.size():   " << images.size() 
-            << "\n\t objects.size():  " << objects.size() 
+            << "\n\t images.size():   " << images.size()
+            << "\n\t objects.size():  " << objects.size()
             );
 
         typename image_array_type::value_type temp;
@@ -1489,9 +1489,9 @@ namespace dlib
                      images.size() == objects2.size(),
             "\t void rotate_image_dataset()"
             << "\n\t Invalid inputs were given to this function."
-            << "\n\t images.size():   " << images.size() 
-            << "\n\t objects.size():  " << objects.size() 
-            << "\n\t objects2.size(): " << objects2.size() 
+            << "\n\t images.size():   " << images.size()
+            << "\n\t objects.size():  " << objects.size()
+            << "\n\t objects2.size(): " << objects2.size()
             );
 
         typename image_array_type::value_type temp;
@@ -1515,9 +1515,9 @@ namespace dlib
 // ----------------------------------------------------------------------------------------
 
     template <
-        typename image_array_type, 
-        typename EXP, 
-        typename T, 
+        typename image_array_type,
+        typename EXP,
+        typename T,
         typename U
         >
     void add_image_rotations (
@@ -1528,23 +1528,23 @@ namespace dlib
     )
     {
         // make sure requires clause is not broken
-        DLIB_ASSERT( is_vector(angles) && angles.size() > 0 && 
+        DLIB_ASSERT( is_vector(angles) && angles.size() > 0 &&
                      images.size() == objects.size() &&
                      images.size() == objects2.size(),
             "\t void add_image_rotations()"
             << "\n\t Invalid inputs were given to this function."
-            << "\n\t is_vector(angles): " << is_vector(angles) 
-            << "\n\t angles.size():     " << angles.size() 
-            << "\n\t images.size():     " << images.size() 
-            << "\n\t objects.size():    " << objects.size() 
-            << "\n\t objects2.size():   " << objects2.size() 
+            << "\n\t is_vector(angles): " << is_vector(angles)
+            << "\n\t angles.size():     " << angles.size()
+            << "\n\t images.size():     " << images.size()
+            << "\n\t objects.size():    " << objects.size()
+            << "\n\t objects2.size():   " << objects2.size()
             );
 
         image_array_type new_images;
         std::vector<std::vector<T> > new_objects;
         std::vector<std::vector<U> > new_objects2;
 
-        using namespace impl; 
+        using namespace impl;
 
         std::vector<T> objtemp;
         std::vector<U> objtemp2;
@@ -1576,7 +1576,7 @@ namespace dlib
 // ----------------------------------------------------------------------------------------
 
     template <
-        typename image_array_type, 
+        typename image_array_type,
         typename EXP,
         typename T
         >
@@ -1701,16 +1701,16 @@ namespace dlib
     {
         chip_details() : angle(0), rows(0), cols(0) {}
         chip_details(const rectangle& rect_) : rect(rect_),angle(0), rows(rect_.height()), cols(rect_.width()) {}
-        chip_details(const drectangle& rect_) : rect(rect_),angle(0), 
+        chip_details(const drectangle& rect_) : rect(rect_),angle(0),
           rows((unsigned long)(rect_.height()+0.5)), cols((unsigned long)(rect_.width()+0.5)) {}
-        chip_details(const drectangle& rect_, unsigned long size) : rect(rect_),angle(0) 
+        chip_details(const drectangle& rect_, unsigned long size) : rect(rect_),angle(0)
         { compute_dims_from_size(size); }
-        chip_details(const drectangle& rect_, unsigned long size, double angle_) : rect(rect_),angle(angle_) 
+        chip_details(const drectangle& rect_, unsigned long size, double angle_) : rect(rect_),angle(angle_)
         { compute_dims_from_size(size); }
 
-        chip_details(const drectangle& rect_, const chip_dims& dims) : 
+        chip_details(const drectangle& rect_, const chip_dims& dims) :
             rect(rect_),angle(0),rows(dims.rows), cols(dims.cols) {}
-        chip_details(const drectangle& rect_, const chip_dims& dims, double angle_) : 
+        chip_details(const drectangle& rect_, const chip_dims& dims, double angle_) :
             rect(rect_),angle(angle_),rows(dims.rows), cols(dims.cols) {}
 
         template <typename T>
@@ -1718,14 +1718,14 @@ namespace dlib
             const std::vector<dlib::vector<T,2> >& chip_points,
             const std::vector<dlib::vector<T,2> >& img_points,
             const chip_dims& dims
-        ) : 
-            rows(dims.rows), cols(dims.cols) 
+        ) :
+            rows(dims.rows), cols(dims.cols)
         {
             DLIB_CASSERT( chip_points.size() == img_points.size() && chip_points.size() >= 2,
                 "\t chip_details::chip_details(chip_points,img_points,dims)"
                 << "\n\t Invalid inputs were given to this function."
-                << "\n\t chip_points.size(): " << chip_points.size() 
-                << "\n\t img_points.size():  " << img_points.size() 
+                << "\n\t chip_points.size(): " << chip_points.size()
+                << "\n\t img_points.size():  " << img_points.size()
             );
 
             const point_transform_affine tform = find_similarity_transform(chip_points,img_points);
@@ -1738,19 +1738,19 @@ namespace dlib
             angle = std::atan2(p.y(),p.x());
             // Note that the translation and scale part are represented by the extraction
             // rectangle.  So here we build the appropriate rectangle.
-            const double scale = length(p); 
-            rect = centered_drect(tform(point(dims.cols,dims.rows)/2.0), 
-                                  dims.cols*scale, 
+            const double scale = length(p);
+            rect = centered_drect(tform(point(dims.cols,dims.rows)/2.0),
+                                  dims.cols*scale,
                                   dims.rows*scale);
         }
 
 
         drectangle rect;
         double angle;
-        unsigned long rows; 
+        unsigned long rows;
         unsigned long cols;
 
-        inline unsigned long size() const 
+        inline unsigned long size() const
         {
             return rows*cols;
         }
@@ -1758,7 +1758,7 @@ namespace dlib
     private:
         void compute_dims_from_size (
             unsigned long size
-        ) 
+        )
         {
             const double relative_size = std::sqrt(size/(double)rect.area());
             rows = static_cast<unsigned long>(rect.height()*relative_size + 0.5);
@@ -1778,11 +1778,11 @@ namespace dlib
         point p1(0,0);
         point p2(details.cols-1,0);
         point p3(details.cols-1, details.rows-1);
-        to.push_back(p1);  
+        to.push_back(p1);
         from.push_back(rotate_point<double>(center(details.rect),details.rect.tl_corner(),details.angle));
-        to.push_back(p2);  
+        to.push_back(p2);
         from.push_back(rotate_point<double>(center(details.rect),details.rect.tr_corner(),details.angle));
-        to.push_back(p3);  
+        to.push_back(p3);
         from.push_back(rotate_point<double>(center(details.rect),details.rect.br_corner(),details.angle));
         return find_affine_transform(from, to);
     }
@@ -1878,7 +1878,7 @@ namespace dlib
             << "\n\t chip_locations["<<i<<"].rect.is_empty(): " << chip_locations[i].rect.is_empty()
             );
         }
-#endif 
+#endif
 
         pyramid_down<2> pyr;
         long max_depth = 0;
@@ -1929,7 +1929,7 @@ namespace dlib
         {
             // If the chip doesn't have any rotation or scaling then use the basic version
             // of chip extraction that just does a fast copy.
-            if (chip_locations[i].angle == 0 && 
+            if (chip_locations[i].angle == 0 &&
                 chip_locations[i].rows == chip_locations[i].rect.height() &&
                 chip_locations[i].cols == chip_locations[i].rect.width())
             {
@@ -1997,7 +1997,7 @@ namespace dlib
     {
         // If the chip doesn't have any rotation or scaling then use the basic version of
         // chip extraction that just does a fast copy.
-        if (location.angle == 0 && 
+        if (location.angle == 0 &&
             location.rows == location.rect.height() &&
             location.cols == location.rect.width())
         {
@@ -2043,8 +2043,8 @@ namespace dlib
         DLIB_CASSERT(padding >= 0 && size > 0,
             "\t chip_details get_face_chip_details()"
             << "\n\t Invalid inputs were given to this function."
-            << "\n\t padding: " << padding 
-            << "\n\t size:    " << size 
+            << "\n\t padding: " << padding
+            << "\n\t size:    " << size
             );
 
 
@@ -2108,7 +2108,7 @@ namespace dlib
                 // Ignore the lower lip
                 if ((55 <= i && i <= 59) || (65 <= i && i <= 67))
                     continue;
-                // Ignore the eyebrows 
+                // Ignore the eyebrows
                 if (17 <= i && i <= 26)
                     continue;
 
@@ -2152,19 +2152,19 @@ namespace dlib
         DLIB_CASSERT(num_rows(img)==num_columns(img));
 
         const double max_rotation_degrees = 3;
-        const double min_object_height = 0.97; 
-        const double max_object_height = 0.99999; 
+        const double min_object_height = 0.97;
+        const double max_object_height = 0.99999;
         const double translate_amount = 0.02;
 
 
         const auto rect = shrink_rect(get_rect(img),3);
 
         // perturb the location of the crop by a small fraction of the object's size.
-        const point rand_translate = dpoint(rnd.get_double_in_range(-translate_amount,translate_amount)*rect.width(), 
+        const point rand_translate = dpoint(rnd.get_double_in_range(-translate_amount,translate_amount)*rect.width(),
             rnd.get_double_in_range(-translate_amount,translate_amount)*rect.height());
 
         // perturb the scale of the crop by a fraction of the object's size
-        const double rand_scale_perturb = rnd.get_double_in_range(min_object_height, max_object_height); 
+        const double rand_scale_perturb = rnd.get_double_in_range(min_object_height, max_object_height);
 
         const long box_size = rect.height()/rand_scale_perturb;
         const auto crop_rect = centered_rect(center(rect)+rand_translate, box_size, box_size);
@@ -2172,7 +2172,7 @@ namespace dlib
         image_type crop;
         extract_image_chip(img, chip_details(crop_rect, chip_dims(img.nr(),img.nc()), angle), crop);
         if (rnd.get_random_double() > 0.5)
-            flip_image_left_right(crop); 
+            flip_image_left_right(crop);
 
         return crop;
     }
