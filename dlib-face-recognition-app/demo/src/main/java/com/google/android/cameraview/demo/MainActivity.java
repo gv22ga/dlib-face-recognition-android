@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback{
 
     private static final String TAG = "MainActivity";
+    private static final int INPUT_SIZE = 500;
 
     private static final int[] FLASH_OPTIONS = {
             CameraView.FLASH_AUTO,
@@ -329,7 +330,6 @@ public class MainActivity extends AppCompatActivity implements
         private int mScreenRotation = 0;
         private boolean mIsComputing = false;
         private Bitmap mCroppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Bitmap.Config.ARGB_8888);
-        private static final int INPUT_SIZE = 150;
 
         @Override
         protected void onPreExecute() {

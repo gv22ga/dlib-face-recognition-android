@@ -40,6 +40,9 @@ for(VisionDetRet n:results) {
 mFaceRec.train()
 ```
 
+## Image Quality
+You can change the parameters `INPUT_SIZE` in `MainActivity.java` and `MAX_IMAGE_SIZE` in `AddPerson.java` if recognition is not working accurately.
+
 ## Todos
 This app currently uses [HOG based face detector](http://dlib.net/dnn_introduction_ex.cpp.html). This detector fails to detect small faces and is not very accurate. Instead we can use [CNN based face detector](http://dlib.net/dnn_mmod_face_detection_ex.cpp.html), which is very accurate but will take much more time.
 

@@ -42,7 +42,7 @@ public class AddPerson extends AppCompatActivity {
     EditText et_name, et_image;
     Button btn_select_image, btn_add;
     int BITMAP_QUALITY = 100;
-    int MAX_IMAGE_SIZE = 250;
+    int MAX_IMAGE_SIZE = 500;
     String TAG = "AddPerson";
     private Bitmap bitmap;
     private File destination = null;

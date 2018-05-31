@@ -1,5 +1,6 @@
 third_party/OpenCV*
 third_party/opencv*
+third_party/miniglog
 *.swp
 obj/
 !./jni/opencv/*
